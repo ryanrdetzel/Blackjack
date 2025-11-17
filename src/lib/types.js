@@ -24,6 +24,7 @@ export const GAME_RESULT = {
   LOSE: 'lose',
   PUSH: 'push',
   BLACKJACK: 'blackjack',
+  DEALER_BLACKJACK: 'dealer_blackjack',
   SURRENDER: 'surrender',
 };
 

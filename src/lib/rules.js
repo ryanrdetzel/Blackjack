@@ -42,7 +42,7 @@ export function determineOutcome(playerCards, dealerCards) {
 
   // Dealer has blackjack - player loses
   if (dealerBlackjack) {
-    return GAME_RESULT.LOSE;
+    return GAME_RESULT.DEALER_BLACKJACK;
   }
 
   // Dealer busts - player wins
@@ -77,6 +77,7 @@ export function calculatePayout(bet, result, blackjackPayout = [3, 2]) {
     case GAME_RESULT.PUSH:
       // Push returns original bet
       return bet;
+    case GAME_RESULT.DEALER_BLACKJACK:
     case GAME_RESULT.LOSE:
       // Loss returns nothing
       return 0;
@@ -96,6 +97,8 @@ export function getResultMessage(result, payout, bet) {
       return `You win! +$${payout - bet}`;
     case GAME_RESULT.PUSH:
       return `Push - bet returned`;
+    case GAME_RESULT.DEALER_BLACKJACK:
+      return `Dealer Blackjack! You lose -$${bet}`;
     case GAME_RESULT.LOSE:
       return `You lose -$${bet}`;
     default:

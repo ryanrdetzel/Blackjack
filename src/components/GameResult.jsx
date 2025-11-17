@@ -38,7 +38,7 @@ export default function GameResult({ result, message, onNewGame, autoDeal = fals
 
   const getResultColor = () => {
     if (result === 'blackjack' || result === 'win') return 'text-green-400';
-    if (result === 'lose') return 'text-red-400';
+    if (result === 'lose' || result === 'dealer_blackjack') return 'text-red-400';
     return 'text-yellow-400';
   };
 
