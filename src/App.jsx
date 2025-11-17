@@ -7,7 +7,7 @@ import GameControls from './components/GameControls';
 import GameResult from './components/GameResult';
 
 function App() {
-  const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
+  const [state, dispatch] = useReducer(gameReducer, createInitialState());
 
   // Auto-deal after bet is placed
   useEffect(() => {
