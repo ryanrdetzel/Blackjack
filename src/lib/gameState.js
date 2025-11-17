@@ -6,15 +6,18 @@ import { GAME_PHASES, HAND_STATUS, DEFAULT_CONFIG } from './types';
  * Create initial game state
  */
 export function createInitialState(config = DEFAULT_CONFIG) {
+  // Handle null config (e.g., when used as lazy initializer in useReducer)
+  const finalConfig = config || DEFAULT_CONFIG;
+
   // Load balance from localStorage or use default
   const savedBalance = localStorage.getItem('blackjack_balance');
-  const balance = savedBalance ? parseFloat(savedBalance) : config.startingBalance;
+  const balance = savedBalance ? parseFloat(savedBalance) : finalConfig.startingBalance;
 
   return {
     phase: GAME_PHASES.BETTING,
     balance,
     currentBet: 0,
-    shoe: createShoe(config.deckCount),
+    shoe: createShoe(finalConfig.deckCount),
     discardPile: [],
     playerHands: [], // Array of hand objects
     dealerHand: [],
@@ -22,7 +25,7 @@ export function createInitialState(config = DEFAULT_CONFIG) {
     insurance: 0, // Insurance bet amount
     result: null,
     resultMessage: '',
-    config,
+    config: finalConfig,
   };
 }
 
