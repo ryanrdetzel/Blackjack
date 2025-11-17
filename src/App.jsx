@@ -179,6 +179,8 @@ function App() {
                 message={state.resultMessage}
                 onNewGame={handleNewGame}
                 autoDeal={state.settings.autoDeal}
+                onPlaceBet={handlePlaceBet}
+                lastBetAmount={state.settings.lastBetAmount}
               />
             )}
           </div>

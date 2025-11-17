@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 
-export default function GameResult({ result, message, onNewGame, autoDeal = false }) {
+export default function GameResult({ result, message, onNewGame, autoDeal = false, onPlaceBet, lastBetAmount }) {
   const [countdown, setCountdown] = useState(autoDeal ? 3 : null);
 
   useEffect(() => {
@@ -20,7 +20,13 @@ export default function GameResult({ result, message, onNewGame, autoDeal = fals
         }
         if (prev === 1) {
           // Auto-deal when countdown reaches 0
-          setTimeout(() => onNewGame(), 0);
+          // If we have a last bet amount and onPlaceBet function, place the bet directly
+          // This skips the betting panel and goes straight to dealing
+          if (lastBetAmount && onPlaceBet) {
+            setTimeout(() => onPlaceBet(lastBetAmount), 0);
+          } else {
+            setTimeout(() => onNewGame(), 0);
+          }
           return 0;
         }
         return prev - 1;
@@ -28,7 +34,7 @@ export default function GameResult({ result, message, onNewGame, autoDeal = fals
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [autoDeal, onNewGame]);
+  }, [autoDeal, onNewGame, onPlaceBet, lastBetAmount]);
 
   const getResultColor = () => {
     if (result === 'blackjack' || result === 'win') return 'text-green-400';
