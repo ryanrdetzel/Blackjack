@@ -107,3 +107,26 @@ export function isBust(cards) {
   const { value } = calculateHandValue(cards);
   return value > 21;
 }
+
+/**
+ * Check if a hand is a pair (can be split)
+ */
+export function isPair(cards) {
+  if (cards.length !== 2) return false;
+
+  // Both cards must have same rank
+  return cards[0].rank === cards[1].rank;
+}
+
+/**
+ * Check if two cards have the same value (for split purposes)
+ * Some casinos allow splitting any 10-value cards (10, J, Q, K)
+ */
+export function isSameValue(cards) {
+  if (cards.length !== 2) return false;
+
+  const value1 = getCardValue(cards[0]);
+  const value2 = getCardValue(cards[1]);
+
+  return value1 === value2;
+}

@@ -97,23 +97,23 @@ https://app.com/?s={base64_encoded_state}
 
 ---
 
-### Milestone 2: Complete Blackjack Rules
+### Milestone 2: Complete Blackjack Rules ✓ COMPLETE
 **Goal**: Full-featured blackjack with all standard options
 
 **Features**:
-- Double down (2x bet, receive 1 card, end turn)
-- Split pairs (create two hands, separate bets)
-- Insurance (when dealer shows Ace)
-- Surrender (forfeit half bet)
-- Multi-hand support (after splits)
-- Better card visuals (suit symbols, face cards)
+- ✓ Double down (2x bet, receive 1 card, end turn)
+- ✓ Split pairs (create two hands, separate bets)
+- ✓ Insurance (when dealer shows Ace)
+- ✓ Surrender (forfeit half bet)
+- ✓ Multi-hand support (after splits)
+- ✓ Better card visuals (suit symbols, face cards)
 
 **Technical Tasks**:
-- Extend game state to handle multiple hands
-- Implement split/double logic
-- Add insurance and surrender options
-- Improve UI for multiple hands
-- Add hand comparison logic (push scenarios)
+- ✓ Extend game state to handle multiple hands
+- ✓ Implement split/double logic
+- ✓ Add insurance and surrender options
+- ✓ Improve UI for multiple hands
+- ✓ Add hand comparison logic (push scenarios)
 
 ---
 
