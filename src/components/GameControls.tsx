@@ -1,3 +1,17 @@
+interface GameControlsProps {
+  onHit: () => void;
+  onStand: () => void;
+  onDouble: () => void;
+  onSplit: () => void;
+  onSurrender: () => void;
+  onInsurance: () => void;
+  canDouble?: boolean;
+  canSplit?: boolean;
+  canSurrender?: boolean;
+  canInsurance?: boolean;
+  disabled?: boolean;
+}
+
 export default function GameControls({
   onHit,
   onStand,
@@ -10,7 +24,7 @@ export default function GameControls({
   canSurrender = false,
   canInsurance = false,
   disabled = false,
-}) {
+}: GameControlsProps) {
   return (
     <div className="space-y-3">
       {/* Insurance option (if available) */}

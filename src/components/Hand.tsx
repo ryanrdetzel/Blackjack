@@ -1,7 +1,15 @@
 import Card from './Card';
 import { calculateHandValue } from '../lib/deck';
+import { Card as CardType } from '../lib/types';
 
-export default function Hand({ cards, label, hideFirstCard = false, showValue = true }) {
+interface HandProps {
+  cards: CardType[];
+  label: string;
+  hideFirstCard?: boolean;
+  showValue?: boolean;
+}
+
+export default function Hand({ cards, label, hideFirstCard = false, showValue = true }: HandProps) {
   const { value, isSoft } = calculateHandValue(cards);
 
   // If hiding first card, calculate value without it

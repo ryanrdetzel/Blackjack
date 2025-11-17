@@ -1,6 +1,12 @@
 import clsx from 'clsx';
+import { Card as CardType } from '../lib/types';
 
-export default function Card({ card, faceDown = false }) {
+interface CardProps {
+  card: CardType;
+  faceDown?: boolean;
+}
+
+export default function Card({ card, faceDown = false }: CardProps) {
   if (faceDown) {
     return (
       <div className="card card-back select-none">

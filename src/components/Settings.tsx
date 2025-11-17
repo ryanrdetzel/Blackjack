@@ -1,8 +1,22 @@
-export default function Settings({ settings, onUpdateSettings, isOpen, onClose }) {
+interface GameSettings {
+  autoDeal: boolean;
+  lastBetAmount: number;
+}
+
+interface SettingsProps {
+  settings: GameSettings;
+  onUpdateSettings: (settings: Partial<GameSettings>) => void;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Settings({ settings, onUpdateSettings, isOpen, onClose }: SettingsProps) {
   if (!isOpen) return null;
 
-  const handleToggle = (key) => {
-    onUpdateSettings({ [key]: !settings[key] });
+  const handleToggle = (key: keyof GameSettings) => {
+    if (typeof settings[key] === 'boolean') {
+      onUpdateSettings({ [key]: !settings[key] });
+    }
   };
 
   return (

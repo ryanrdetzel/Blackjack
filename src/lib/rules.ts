@@ -1,10 +1,10 @@
 import { calculateHandValue, isBlackjack, isBust } from './deck';
-import { GAME_RESULT } from './types';
+import { GAME_RESULT, Card, GameResult } from './types';
 
 /**
  * Determine if dealer should hit
  */
-export function dealerShouldHit(dealerCards, hitSoft17 = false) {
+export function dealerShouldHit(dealerCards: Card[], hitSoft17: boolean = false): boolean {
   const { value, isSoft } = calculateHandValue(dealerCards);
 
   if (value < 17) return true;
@@ -19,7 +19,7 @@ export function dealerShouldHit(dealerCards, hitSoft17 = false) {
 /**
  * Determine the outcome of a hand
  */
-export function determineOutcome(playerCards, dealerCards) {
+export function determineOutcome(playerCards: Card[], dealerCards: Card[]): GameResult {
   const playerBlackjack = isBlackjack(playerCards);
   const dealerBlackjack = isBlackjack(dealerCards);
   const playerBust = isBust(playerCards);
@@ -66,7 +66,7 @@ export function determineOutcome(playerCards, dealerCards) {
 /**
  * Calculate payout based on result
  */
-export function calculatePayout(bet, result, blackjackPayout = [3, 2]) {
+export function calculatePayout(bet: number, result: GameResult, blackjackPayout: [number, number] = [3, 2]): number {
   switch (result) {
     case GAME_RESULT.BLACKJACK:
       // Blackjack pays 3:2 (or configured ratio)
@@ -89,7 +89,7 @@ export function calculatePayout(bet, result, blackjackPayout = [3, 2]) {
 /**
  * Get a human-readable message for the result
  */
-export function getResultMessage(result, payout, bet) {
+export function getResultMessage(result: GameResult, payout: number, bet: number): string {
   switch (result) {
     case GAME_RESULT.BLACKJACK:
       return `Blackjack! You win $${payout - bet}`;
