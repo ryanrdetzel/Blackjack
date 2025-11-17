@@ -1,4 +1,4 @@
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useState } from 'react';
 import { gameReducer, createInitialState } from './lib/gameState';
 import { GAME_PHASES, HAND_STATUS } from './lib/types';
 import { isPair } from './lib/deck';
@@ -6,9 +6,11 @@ import Hand from './components/Hand';
 import BettingControls from './components/BettingControls';
 import GameControls from './components/GameControls';
 import GameResult from './components/GameResult';
+import Settings from './components/Settings';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Auto-deal after bet is placed
   useEffect(() => {
@@ -68,6 +70,10 @@ function App() {
     }
   };
 
+  const handleUpdateSettings = (settings) => {
+    dispatch({ type: 'UPDATE_SETTINGS', settings });
+  };
+
   // Determine which actions are available
   const currentHand = state.playerHands[state.activeHandIndex];
   const canDouble = currentHand &&
@@ -110,6 +116,13 @@ function App() {
             >
               Reset
             </button>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="text-2xl px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+              title="Settings"
+            >
+              ⚙️
+            </button>
           </div>
         </div>
       </div>
@@ -144,6 +157,7 @@ function App() {
                 minBet={state.config.minBet}
                 maxBet={state.config.maxBet}
                 onPlaceBet={handlePlaceBet}
+                lastBetAmount={state.settings.lastBetAmount}
               />
             )}
 
@@ -164,6 +178,7 @@ function App() {
                 result={state.result}
                 message={state.resultMessage}
                 onNewGame={handleNewGame}
+                autoDeal={state.settings.autoDeal}
               />
             )}
           </div>
@@ -237,6 +252,14 @@ function App() {
         {state.config.surrenderAllowed && ', Surrender allowed'}
         {state.config.doubleAfterSplit && ', DAS'}
       </div>
+
+      {/* Settings Modal */}
+      <Settings
+        settings={state.settings}
+        onUpdateSettings={handleUpdateSettings}
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </div>
   );
 }

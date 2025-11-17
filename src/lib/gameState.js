@@ -13,6 +13,14 @@ export function createInitialState(config = DEFAULT_CONFIG) {
   const savedBalance = localStorage.getItem('blackjack_balance');
   const balance = savedBalance ? parseFloat(savedBalance) : finalConfig.startingBalance;
 
+  // Load settings from localStorage or use defaults
+  const savedSettings = localStorage.getItem('blackjack_settings');
+  const defaultSettings = {
+    autoDeal: false,
+    lastBetAmount: finalConfig.minBet,
+  };
+  const settings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+
   return {
     phase: GAME_PHASES.BETTING,
     balance,
@@ -26,6 +34,7 @@ export function createInitialState(config = DEFAULT_CONFIG) {
     result: null,
     resultMessage: '',
     config: finalConfig,
+    settings, // Game settings (auto-deal, last bet, etc.)
   };
 }
 
@@ -55,10 +64,18 @@ export function gameReducer(state, action) {
       if (amount > state.balance) {
         return state;
       }
+      // Save last bet amount to settings
+      const newSettings = {
+        ...state.settings,
+        lastBetAmount: amount,
+      };
+      localStorage.setItem('blackjack_settings', JSON.stringify(newSettings));
+
       return {
         ...state,
         currentBet: amount,
         phase: GAME_PHASES.DEALING,
+        settings: newSettings,
       };
     }
 
@@ -489,6 +506,18 @@ export function gameReducer(state, action) {
       return {
         ...createInitialState(state.config),
         balance: newBalance,
+      };
+    }
+
+    case 'UPDATE_SETTINGS': {
+      const newSettings = {
+        ...state.settings,
+        ...action.settings,
+      };
+      localStorage.setItem('blackjack_settings', JSON.stringify(newSettings));
+      return {
+        ...state,
+        settings: newSettings,
       };
     }
 
