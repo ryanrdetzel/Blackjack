@@ -7,10 +7,12 @@ import BettingControls from './components/BettingControls';
 import GameControls from './components/GameControls';
 import GameResult from './components/GameResult';
 import Settings from './components/Settings';
+import TableRules from './components/TableRules';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tableRulesOpen, setTableRulesOpen] = useState(false);
 
   // Auto-deal after bet is placed
   useEffect(() => {
@@ -74,6 +76,10 @@ function App() {
     dispatch({ type: 'UPDATE_SETTINGS', settings });
   };
 
+  const handleUpdateConfig = (config) => {
+    dispatch({ type: 'UPDATE_CONFIG', config });
+  };
+
   // Determine which actions are available
   const currentHand = state.playerHands[state.activeHandIndex];
   const canDouble = currentHand &&
@@ -115,6 +121,13 @@ function App() {
               className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded"
             >
               Reset
+            </button>
+            <button
+              onClick={() => setTableRulesOpen(true)}
+              className="text-2xl px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+              title="Table Rules"
+            >
+              📋
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
@@ -261,6 +274,14 @@ function App() {
         onUpdateSettings={handleUpdateSettings}
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+      />
+
+      {/* Table Rules Modal */}
+      <TableRules
+        config={state.config}
+        onUpdateConfig={handleUpdateConfig}
+        isOpen={tableRulesOpen}
+        onClose={() => setTableRulesOpen(false)}
       />
     </div>
   );

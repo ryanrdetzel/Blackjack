@@ -7,7 +7,13 @@ import { GAME_PHASES, HAND_STATUS, DEFAULT_CONFIG } from './types';
  */
 export function createInitialState(config = DEFAULT_CONFIG) {
   // Handle null config (e.g., when used as lazy initializer in useReducer)
-  const finalConfig = config || DEFAULT_CONFIG;
+  const baseConfig = config || DEFAULT_CONFIG;
+
+  // Load table rules from localStorage or use default config
+  const savedTableRules = localStorage.getItem('blackjack_table_rules');
+  const finalConfig = savedTableRules
+    ? { ...baseConfig, ...JSON.parse(savedTableRules) }
+    : baseConfig;
 
   // Load balance from localStorage or use default
   const savedBalance = localStorage.getItem('blackjack_balance');
@@ -518,6 +524,32 @@ export function gameReducer(state, action) {
       return {
         ...state,
         settings: newSettings,
+      };
+    }
+
+    case 'UPDATE_CONFIG': {
+      const newConfig = {
+        ...state.config,
+        ...action.config,
+      };
+      // Save only the customizable rules to localStorage
+      const tableRules = {
+        deckCount: newConfig.deckCount,
+        dealerHitsSoft17: newConfig.dealerHitsSoft17,
+        blackjackPayout: newConfig.blackjackPayout,
+        minBet: newConfig.minBet,
+        maxBet: newConfig.maxBet,
+        startingBalance: newConfig.startingBalance,
+        doubleAfterSplit: newConfig.doubleAfterSplit,
+        resplitAcesAllowed: newConfig.resplitAcesAllowed,
+        maxSplits: newConfig.maxSplits,
+        surrenderAllowed: newConfig.surrenderAllowed,
+        insuranceAllowed: newConfig.insuranceAllowed,
+      };
+      localStorage.setItem('blackjack_table_rules', JSON.stringify(tableRules));
+      return {
+        ...state,
+        config: newConfig,
       };
     }
 
