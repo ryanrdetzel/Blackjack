@@ -2,8 +2,9 @@
 
 A modern, interactive blackjack game built with React, Vite, and Tailwind CSS. Play realistic blackjack while learning optimal strategy.
 
-## 🎯 Features (Milestone 1 - Complete!)
+## 🎯 Features
 
+### Milestone 1 - Complete! ✅
 - ✅ Full blackjack gameplay (hit, stand)
 - ✅ Realistic dealer AI (stands on 17)
 - ✅ Balance tracking with localStorage persistence
@@ -11,6 +12,15 @@ A modern, interactive blackjack game built with React, Vite, and Tailwind CSS. P
 - ✅ Beautiful card animations
 - ✅ Responsive design
 - ✅ Standard rules: 6 decks, dealer stands on soft 17, blackjack pays 3:2
+
+### Milestone 2 - Complete! ✅
+- ✅ **Double Down**: Double your bet and receive one final card
+- ✅ **Split Pairs**: Split matching cards into two separate hands
+- ✅ **Insurance**: Protect against dealer blackjack when showing an Ace
+- ✅ **Surrender**: Forfeit half your bet to exit a poor hand early
+- ✅ **Multi-hand Support**: Play multiple hands simultaneously after splits
+- ✅ **Enhanced Card Visuals**: Professional card design with corner markings
+- ✅ **Advanced Rules**: Configurable options (double after split, resplit aces, max splits)
 
 ## 🚀 Quick Start
 
@@ -33,16 +43,21 @@ Open http://localhost:5173 in your browser to play!
 ## 🎮 How to Play
 
 1. **Place Your Bet**: Use the slider or quick bet buttons to select your wager
-2. **Deal Cards**: Click "Deal Cards" to start the hand
+2. **Deal Cards**: Cards are automatically dealt after placing your bet
 3. **Make Your Decision**:
    - **Hit**: Take another card
    - **Stand**: Keep your current hand and end your turn
+   - **Double**: Double your bet and receive exactly one more card
+   - **Split**: If you have a pair, split into two separate hands (requires second bet)
+   - **Surrender**: Forfeit the hand and recover half your bet
+   - **Insurance**: When dealer shows an Ace, bet half your wager that they have blackjack
 4. **Dealer Plays**: The dealer automatically plays (hits until 17+)
 5. **Win or Lose**: See the result and your updated balance
-6. **Play Again**: Click "New Hand" to play another round
+6. **Play Again**: Click "New Hand" to start another round
 
 ## 📋 Game Rules
 
+### Basic Rules
 - Standard blackjack rules apply
 - 6-deck shoe (reshuffled when < 52 cards remain)
 - Dealer stands on all 17s (including soft 17)
@@ -50,6 +65,15 @@ Open http://localhost:5173 in your browser to play!
 - Starting balance: $1,000
 - Minimum bet: $5
 - Maximum bet: $500
+
+### Advanced Options
+- **Double Down**: Available on any initial two cards
+- **Double After Split (DAS)**: Allowed
+- **Split**: Up to 3 times (4 hands total)
+- **Split Aces**: Receive one card per ace (standard rule)
+- **Resplit Aces**: Not allowed (standard rule)
+- **Late Surrender**: Allowed (recover half your bet)
+- **Insurance**: Available when dealer shows Ace (pays 2:1)
 
 ## 🗂️ Project Structure
 
@@ -75,7 +99,8 @@ PLAN.md                      # Full project roadmap and future features
 
 ## 🎓 Future Features (See PLAN.md)
 
-- **Milestone 2**: Double down, split, insurance, surrender
+- ✅ **Milestone 1**: Basic blackjack game (hit, stand, betting)
+- ✅ **Milestone 2**: Double down, split, insurance, surrender
 - **Milestone 3**: Customizable game configurations (save/share)
 - **Milestone 4**: Learning mode with strategy hints
 - **Milestone 5**: Speed training mode

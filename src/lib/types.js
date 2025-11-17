@@ -16,6 +16,7 @@ export const HAND_STATUS = {
   STAND: 'stand',
   BUST: 'bust',
   BLACKJACK: 'blackjack',
+  SURRENDER: 'surrender',
 };
 
 export const GAME_RESULT = {
@@ -23,6 +24,7 @@ export const GAME_RESULT = {
   LOSE: 'lose',
   PUSH: 'push',
   BLACKJACK: 'blackjack',
+  SURRENDER: 'surrender',
 };
 
 // Default game configuration
@@ -34,4 +36,10 @@ export const DEFAULT_CONFIG = {
   minBet: 5,
   maxBet: 500,
   startingBalance: 1000,
+  // Milestone 2 options
+  doubleAfterSplit: true,
+  resplitAcesAllowed: false,
+  maxSplits: 3,
+  surrenderAllowed: true,
+  insuranceAllowed: true,
 };

@@ -1,13 +1,14 @@
 import { useReducer, useEffect } from 'react';
 import { gameReducer, createInitialState } from './lib/gameState';
-import { GAME_PHASES } from './lib/types';
+import { GAME_PHASES, HAND_STATUS } from './lib/types';
+import { isPair } from './lib/deck';
 import Hand from './components/Hand';
 import BettingControls from './components/BettingControls';
 import GameControls from './components/GameControls';
 import GameResult from './components/GameResult';
 
 function App() {
-  const [state, dispatch] = useReducer(gameReducer, createInitialState());
+  const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
 
   // Auto-deal after bet is placed
   useEffect(() => {
@@ -41,6 +42,22 @@ function App() {
     dispatch({ type: 'STAND' });
   };
 
+  const handleDouble = () => {
+    dispatch({ type: 'DOUBLE' });
+  };
+
+  const handleSplit = () => {
+    dispatch({ type: 'SPLIT' });
+  };
+
+  const handleSurrender = () => {
+    dispatch({ type: 'SURRENDER' });
+  };
+
+  const handleInsurance = () => {
+    dispatch({ type: 'INSURANCE' });
+  };
+
   const handleNewGame = () => {
     dispatch({ type: 'NEW_GAME' });
   };
@@ -50,6 +67,31 @@ function App() {
       dispatch({ type: 'RESET_BALANCE' });
     }
   };
+
+  // Determine which actions are available
+  const currentHand = state.playerHands[state.activeHandIndex];
+  const canDouble = currentHand &&
+    currentHand.cards.length === 2 &&
+    currentHand.bet <= state.balance &&
+    (!currentHand.fromSplit || state.config.doubleAfterSplit);
+
+  const canSplit = currentHand &&
+    isPair(currentHand.cards) &&
+    currentHand.bet <= state.balance &&
+    state.playerHands.filter(h => h.fromSplit).length < state.config.maxSplits;
+
+  const canSurrender = currentHand &&
+    state.config.surrenderAllowed &&
+    currentHand.cards.length === 2 &&
+    state.playerHands.length === 1;
+
+  const canInsurance = state.phase === GAME_PHASES.PLAYER_TURN &&
+    state.config.insuranceAllowed &&
+    state.dealerHand.length > 0 &&
+    state.dealerHand[0].rank === 'A' &&
+    state.insurance === 0 &&
+    state.activeHandIndex === 0 &&
+    (state.currentBet / 2) <= state.balance;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-900 to-green-800">
@@ -87,6 +129,13 @@ function App() {
             </div>
           )}
 
+          {/* Insurance indicator */}
+          {state.insurance > 0 && (
+            <div className="text-center text-yellow-300 font-bold">
+              Insurance: ${state.insurance}
+            </div>
+          )}
+
           {/* Game Status Area */}
           <div className="flex justify-center min-h-[200px] items-center">
             {state.phase === GAME_PHASES.BETTING && (
@@ -119,23 +168,61 @@ function App() {
             )}
           </div>
 
-          {/* Player's Hand */}
-          {state.playerHand.length > 0 && (
-            <div className="flex justify-center">
-              <Hand
-                cards={state.playerHand}
-                label={`Your Hand (Bet: $${state.currentBet})`}
-                showValue={true}
-              />
+          {/* Player's Hands */}
+          {state.playerHands.length > 0 && (
+            <div className="flex justify-center gap-8 flex-wrap">
+              {state.playerHands.map((hand, index) => {
+                const isActive = index === state.activeHandIndex && state.phase === GAME_PHASES.PLAYER_TURN;
+                const handLabel = state.playerHands.length > 1
+                  ? `Hand ${index + 1} (Bet: $${hand.bet})`
+                  : `Your Hand (Bet: $${hand.bet})`;
+
+                return (
+                  <div
+                    key={index}
+                    className={`transition-all ${
+                      isActive
+                        ? 'ring-4 ring-yellow-400 rounded-lg p-2 shadow-lg shadow-yellow-400/50'
+                        : hand.status === HAND_STATUS.BUST
+                        ? 'opacity-50'
+                        : 'opacity-75'
+                    }`}
+                  >
+                    <Hand
+                      cards={hand.cards}
+                      label={handLabel}
+                      showValue={true}
+                      status={hand.status}
+                    />
+                    {hand.status === HAND_STATUS.BUST && (
+                      <div className="text-center text-red-400 font-bold mt-2">BUST</div>
+                    )}
+                    {hand.status === HAND_STATUS.SURRENDER && (
+                      <div className="text-center text-orange-400 font-bold mt-2">SURRENDERED</div>
+                    )}
+                    {hand.doubled && (
+                      <div className="text-center text-blue-400 font-semibold mt-1 text-sm">Doubled</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
           {/* Player Controls */}
-          {state.phase === GAME_PHASES.PLAYER_TURN && (
+          {state.phase === GAME_PHASES.PLAYER_TURN && currentHand && (
             <div className="flex justify-center">
               <GameControls
                 onHit={handleHit}
                 onStand={handleStand}
+                onDouble={handleDouble}
+                onSplit={handleSplit}
+                onSurrender={handleSurrender}
+                onInsurance={handleInsurance}
+                canDouble={canDouble}
+                canSplit={canSplit}
+                canSurrender={canSurrender}
+                canInsurance={canInsurance}
               />
             </div>
           )}
@@ -147,6 +234,8 @@ function App() {
         {state.config.name} Rules: {state.config.deckCount} decks,
         Dealer {state.config.dealerHitsSoft17 ? 'hits' : 'stands'} on soft 17,
         Blackjack pays {state.config.blackjackPayout[0]}:{state.config.blackjackPayout[1]}
+        {state.config.surrenderAllowed && ', Surrender allowed'}
+        {state.config.doubleAfterSplit && ', DAS'}
       </div>
     </div>
   );
