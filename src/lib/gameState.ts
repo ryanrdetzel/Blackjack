@@ -62,7 +62,8 @@ type GameAction =
   | { type: 'NEW_GAME' }
   | { type: 'RESET_BALANCE' }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<GameSettings> }
-  | { type: 'UPDATE_CONFIG'; config: Partial<GameConfig> };
+  | { type: 'UPDATE_CONFIG'; config: Partial<GameConfig> }
+  | { type: 'LOAD_CONFIG'; config: GameConfig };
 
 /**
  * Create initial game state
@@ -612,6 +613,61 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         config: newConfig,
+      };
+    }
+
+    case 'LOAD_CONFIG': {
+      // Load a complete configuration (from presets or saved configs)
+      const newConfig = action.config;
+
+      // Save configuration to localStorage
+      const tableRules = {
+        deckCount: newConfig.deckCount,
+        dealerHitsSoft17: newConfig.dealerHitsSoft17,
+        blackjackPayout: newConfig.blackjackPayout,
+        minBet: newConfig.minBet,
+        maxBet: newConfig.maxBet,
+        startingBalance: newConfig.startingBalance,
+        doubleAfterSplit: newConfig.doubleAfterSplit,
+        resplitAcesAllowed: newConfig.resplitAcesAllowed,
+        maxSplits: newConfig.maxSplits,
+        surrenderAllowed: newConfig.surrenderAllowed,
+        insuranceAllowed: newConfig.insuranceAllowed,
+      };
+      localStorage.setItem(STORAGE_KEY_TABLE_RULES, JSON.stringify(tableRules));
+
+      // Create new shoe if deck count changed
+      const newShoe = state.config.deckCount !== newConfig.deckCount
+        ? createShoe(newConfig.deckCount)
+        : state.shoe;
+
+      // Adjust lastBetAmount if it's outside the new min/max range
+      const adjustedLastBet = Math.max(
+        newConfig.minBet,
+        Math.min(newConfig.maxBet, state.settings.lastBetAmount)
+      );
+
+      const newSettings = {
+        ...state.settings,
+        lastBetAmount: adjustedLastBet,
+      };
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(newSettings));
+
+      // Reset to betting phase with new config
+      return {
+        ...state,
+        phase: GAME_PHASES.BETTING,
+        config: newConfig,
+        shoe: newShoe,
+        discardPile: [],
+        playerHands: [],
+        dealerHand: [],
+        activeHandIndex: ZERO,
+        currentBet: ZERO,
+        insurance: ZERO,
+        result: null,
+        resultMessage: '',
+        settings: newSettings,
       };
     }
 

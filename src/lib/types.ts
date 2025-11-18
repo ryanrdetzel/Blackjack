@@ -80,3 +80,98 @@ export const DEFAULT_CONFIG: GameConfig = {
   surrenderAllowed: true,
   insuranceAllowed: true,
 };
+
+// Preset configurations for Milestone 3
+export const PRESET_CONFIGS: Record<string, GameConfig> = {
+  'standard': DEFAULT_CONFIG,
+
+  'vegas-strip': {
+    name: 'Vegas Strip',
+    deckCount: 6,
+    dealerHitsSoft17: false,
+    blackjackPayout: [3, 2],
+    minBet: 10,
+    maxBet: 1000,
+    startingBalance: 1000,
+    doubleAfterSplit: true,
+    resplitAcesAllowed: false,
+    maxSplits: 3,
+    surrenderAllowed: true,
+    insuranceAllowed: true,
+  },
+
+  'atlantic-city': {
+    name: 'Atlantic City',
+    deckCount: 8,
+    dealerHitsSoft17: false,
+    blackjackPayout: [3, 2],
+    minBet: 10,
+    maxBet: 500,
+    startingBalance: 1000,
+    doubleAfterSplit: true,
+    resplitAcesAllowed: true,
+    maxSplits: 3,
+    surrenderAllowed: true,
+    insuranceAllowed: true,
+  },
+
+  'european': {
+    name: 'European',
+    deckCount: 6,
+    dealerHitsSoft17: false,
+    blackjackPayout: [3, 2],
+    minBet: 5,
+    maxBet: 500,
+    startingBalance: 1000,
+    doubleAfterSplit: false,
+    resplitAcesAllowed: false,
+    maxSplits: 1, // Only one split
+    surrenderAllowed: false,
+    insuranceAllowed: true,
+  },
+
+  'liberal': {
+    name: 'Liberal Rules',
+    deckCount: 2,
+    dealerHitsSoft17: false,
+    blackjackPayout: [3, 2],
+    minBet: 5,
+    maxBet: 1000,
+    startingBalance: 1000,
+    doubleAfterSplit: true,
+    resplitAcesAllowed: true,
+    maxSplits: 4, // Max splits allowed
+    surrenderAllowed: true,
+    insuranceAllowed: true,
+  },
+
+  'vegas-downtown': {
+    name: 'Vegas Downtown (6:5)',
+    deckCount: 6,
+    dealerHitsSoft17: true, // Dealer hits soft 17 (worse for player)
+    blackjackPayout: [6, 5], // 6:5 payout (worse for player)
+    minBet: 5,
+    maxBet: 500,
+    startingBalance: 1000,
+    doubleAfterSplit: true,
+    resplitAcesAllowed: false,
+    maxSplits: 2,
+    surrenderAllowed: false,
+    insuranceAllowed: true,
+  },
+
+  'high-roller': {
+    name: 'High Roller',
+    deckCount: 8,
+    dealerHitsSoft17: false,
+    blackjackPayout: [3, 2],
+    minBet: 100,
+    maxBet: 10000,
+    startingBalance: 5000,
+    doubleAfterSplit: true,
+    resplitAcesAllowed: true,
+    maxSplits: 3,
+    surrenderAllowed: true,
+    insuranceAllowed: true,
+  },
+};
