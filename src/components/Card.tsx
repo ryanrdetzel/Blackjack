@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { Card as CardType } from '../lib/types';
+import { CARD_BACK_SYMBOL, RED_SUITS } from '../lib/constants';
 
 interface CardProps {
   card: CardType;
@@ -10,12 +11,12 @@ export default function Card({ card, faceDown = false }: CardProps) {
   if (faceDown) {
     return (
       <div className="card card-back select-none">
-        🂠
+        {CARD_BACK_SYMBOL}
       </div>
     );
   }
 
-  const isRed = card.suit === '♥' || card.suit === '♦';
+  const isRed = (RED_SUITS as readonly string[]).includes(card.suit);
 
   // Get display value for face cards
   const displayRank = card.rank;

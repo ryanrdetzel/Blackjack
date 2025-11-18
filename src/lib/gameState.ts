@@ -1,6 +1,20 @@
-import { createShoe, drawCard, calculateHandValue, isBlackjack, isBust, isPair } from './deck';
+import { createShoe, drawCard, isBlackjack, isBust, isPair } from './deck';
 import { dealerShouldHit, determineOutcome, calculatePayout } from './rules';
 import { GAME_PHASES, HAND_STATUS, DEFAULT_CONFIG, Card, GamePhase, HandStatus, GameResult, GameConfig } from './types';
+import {
+  STORAGE_KEY_TABLE_RULES,
+  STORAGE_KEY_BALANCE,
+  STORAGE_KEY_SETTINGS,
+  MIN_CARDS_BEFORE_RESHUFFLE,
+  INITIAL_HAND_SIZE,
+  INSURANCE_TOTAL_RETURN_MULTIPLIER,
+  INSURANCE_PAYOUT_MULTIPLIER,
+  INSURANCE_BET_DIVISOR,
+  SURRENDER_PAYOUT_DIVISOR,
+  DOUBLE_BET_MULTIPLIER,
+  NEXT_INDEX_OFFSET,
+  ZERO,
+} from './constants';
 
 // Game state types
 interface GameHand {
@@ -58,17 +72,17 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
   const baseConfig = config || DEFAULT_CONFIG;
 
   // Load table rules from localStorage or use default config
-  const savedTableRules = localStorage.getItem('blackjack_table_rules');
+  const savedTableRules = localStorage.getItem(STORAGE_KEY_TABLE_RULES);
   const finalConfig: GameConfig = savedTableRules
     ? { ...baseConfig, ...JSON.parse(savedTableRules) }
     : baseConfig;
 
   // Load balance from localStorage or use default
-  const savedBalance = localStorage.getItem('blackjack_balance');
+  const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
   const balance = savedBalance ? parseFloat(savedBalance) : finalConfig.startingBalance;
 
   // Load settings from localStorage or use defaults
-  const savedSettings = localStorage.getItem('blackjack_settings');
+  const savedSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
   const defaultSettings: GameSettings = {
     autoDeal: false,
     lastBetAmount: finalConfig.minBet,
@@ -123,7 +137,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state.settings,
         lastBetAmount: amount,
       };
-      localStorage.setItem('blackjack_settings', JSON.stringify(newSettings));
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(newSettings));
 
       return {
         ...state,
@@ -172,7 +186,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         const newBalance = state.balance - state.currentBet + payout;
 
         // Save balance to localStorage
-        localStorage.setItem('blackjack_balance', newBalance.toString());
+        localStorage.setItem(STORAGE_KEY_BALANCE, newBalance.toString());
 
         return {
           ...state,
@@ -281,7 +295,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
       // Can only double on initial two cards
-      if (currentHand.cards.length !== 2) {
+      if (currentHand.cards.length !== INITIAL_HAND_SIZE) {
         return state;
       }
 
@@ -295,7 +309,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       newHands[state.activeHandIndex] = {
         ...currentHand,
         cards: newCards,
-        bet: currentHand.bet * 2,
+        bet: currentHand.bet * DOUBLE_BET_MULTIPLIER,
         doubled: true,
         status: bust ? HAND_STATUS.BUST : HAND_STATUS.STAND,
       };
@@ -397,7 +411,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const currentHand = state.playerHands[state.activeHandIndex];
 
       // Can only surrender on initial two cards before any action
-      if (currentHand.cards.length !== 2) {
+      if (currentHand.cards.length !== INITIAL_HAND_SIZE) {
         return state;
       }
 
@@ -432,7 +446,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
       // Insurance is half the original bet
-      const insuranceAmount = state.currentBet / 2;
+      const insuranceAmount = state.currentBet / INSURANCE_BET_DIVISOR;
 
       // Check if player has enough balance
       if (insuranceAmount > state.balance) {
@@ -466,11 +480,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const dealerBlackjack = isBlackjack(dealerHand);
 
       // Process insurance bet
-      if (state.insurance > 0) {
+      if (state.insurance > ZERO) {
         if (dealerBlackjack) {
           // Insurance pays 2:1
-          totalPayout += state.insurance * 3; // Original bet + 2x payout
-          resultMessages.push(`Insurance wins +$${state.insurance * 2}`);
+          totalPayout += state.insurance * INSURANCE_TOTAL_RETURN_MULTIPLIER; // Original bet + 2x payout
+          resultMessages.push(`Insurance wins +$${state.insurance * INSURANCE_PAYOUT_MULTIPLIER}`);
         } else {
           resultMessages.push(`Insurance loses -$${state.insurance}`);
         }
@@ -483,13 +497,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
         if (hand.status === HAND_STATUS.SURRENDER) {
           // Surrender returns half the bet
-          handPayout = hand.bet / 2;
+          handPayout = hand.bet / SURRENDER_PAYOUT_DIVISOR;
           result = 'surrender';
-          resultMessages.push(`Hand ${index + 1}: Surrendered (recovered $${handPayout})`);
+          resultMessages.push(`Hand ${index + NEXT_INDEX_OFFSET}: Surrendered (recovered $${handPayout})`);
         } else if (hand.status === HAND_STATUS.BUST) {
           // Bust loses the bet
           result = 'lose';
-          resultMessages.push(`Hand ${index + 1}: Bust (lost $${hand.bet})`);
+          resultMessages.push(`Hand ${index + NEXT_INDEX_OFFSET}: Bust (lost $${hand.bet})`);
         } else {
           // Compare with dealer
           result = determineOutcome(hand.cards, dealerHand);
@@ -497,13 +511,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
           const profit = handPayout - hand.bet;
           if (result === 'blackjack') {
-            resultMessages.push(`Hand ${index + 1}: Blackjack! (+$${profit})`);
+            resultMessages.push(`Hand ${index + NEXT_INDEX_OFFSET}: Blackjack! (+$${profit})`);
           } else if (result === 'win') {
-            resultMessages.push(`Hand ${index + 1}: Win (+$${profit})`);
+            resultMessages.push(`Hand ${index + NEXT_INDEX_OFFSET}: Win (+$${profit})`);
           } else if (result === 'push') {
-            resultMessages.push(`Hand ${index + 1}: Push (bet returned)`);
-          } else {
-            resultMessages.push(`Hand ${index + 1}: Lose (-$${hand.bet})`);
+            resultMessages.push(`Hand ${index + NEXT_INDEX_OFFSET}: Push (bet returned)`);
+          } else if (result === 'lose') {
+            resultMessages.push(`Hand ${index + NEXT_INDEX_OFFSET}: Lose (-$${hand.bet})`);
           }
         }
 
@@ -515,13 +529,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const newBalance = state.balance - totalBet + totalPayout;
 
       // Save balance to localStorage
-      localStorage.setItem('blackjack_balance', newBalance.toString());
+      localStorage.setItem(STORAGE_KEY_BALANCE, newBalance.toString());
 
       // Create overall result message
       const netProfit = totalPayout - totalBet;
-      const overallMessage = netProfit > 0
+      const overallMessage = netProfit > ZERO
         ? `Total: +$${netProfit.toFixed(2)}`
-        : netProfit < 0
+        : netProfit < ZERO
         ? `Total: -$${Math.abs(netProfit).toFixed(2)}`
         : 'Total: Break even';
 
@@ -530,7 +544,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         shoe,
         dealerHand,
         phase: GAME_PHASES.GAME_OVER,
-        result: netProfit > 0 ? 'win' : netProfit < 0 ? 'lose' : 'push',
+        result: netProfit > ZERO ? 'win' : netProfit < ZERO ? 'lose' : 'push',
         resultMessage: [...resultMessages, overallMessage].join('\n'),
         balance: newBalance,
       };
@@ -538,7 +552,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'NEW_GAME': {
       // Check if we need to reshuffle (less than 52 cards left)
-      const shoe = state.shoe.length < 52 ? createShoe(state.config.deckCount) : state.shoe;
+      const shoe = state.shoe.length < MIN_CARDS_BEFORE_RESHUFFLE ? createShoe(state.config.deckCount) : state.shoe;
 
       return {
         ...state,
@@ -556,7 +570,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'RESET_BALANCE': {
       const newBalance = state.config.startingBalance;
-      localStorage.setItem('blackjack_balance', newBalance.toString());
+      localStorage.setItem(STORAGE_KEY_BALANCE, newBalance.toString());
       return {
         ...createInitialState(state.config),
         balance: newBalance,
@@ -568,7 +582,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state.settings,
         ...action.settings,
       };
-      localStorage.setItem('blackjack_settings', JSON.stringify(newSettings));
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(newSettings));
       return {
         ...state,
         settings: newSettings,
@@ -594,7 +608,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         surrenderAllowed: newConfig.surrenderAllowed,
         insuranceAllowed: newConfig.insuranceAllowed,
       };
-      localStorage.setItem('blackjack_table_rules', JSON.stringify(tableRules));
+      localStorage.setItem(STORAGE_KEY_TABLE_RULES, JSON.stringify(tableRules));
       return {
         ...state,
         config: newConfig,
@@ -617,7 +631,7 @@ function getResultMessage(result: GameResult, payout: number, bet: number): stri
     case 'lose':
       return `You lose -$${bet}`;
     case 'surrender':
-      return `Surrendered - recovered $${bet / 2}`;
+      return `Surrendered - recovered $${bet / SURRENDER_PAYOUT_DIVISOR}`;
     default:
       return '';
   }

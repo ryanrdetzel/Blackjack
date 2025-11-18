@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { QUICK_BET_AMOUNTS } from '../lib/constants';
 
 interface BettingControlsProps {
   balance: number;
@@ -12,7 +13,7 @@ export default function BettingControls({ balance, minBet, maxBet, onPlaceBet, l
   const [showFullControls, setShowFullControls] = useState(false);
   const [betAmount, setBetAmount] = useState(lastBetAmount || minBet);
 
-  const quickBets = [5, 10, 25, 50, 100];
+  const quickBets = QUICK_BET_AMOUNTS;
 
   const handlePlaceBet = () => {
     if (betAmount >= minBet && betAmount <= maxBet && betAmount <= balance) {

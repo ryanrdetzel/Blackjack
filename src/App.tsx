@@ -2,6 +2,15 @@ import { useReducer, useEffect, useState } from 'react';
 import { gameReducer, createInitialState, GameState } from './lib/gameState';
 import { GAME_PHASES, HAND_STATUS, GameConfig } from './lib/types';
 import { isPair } from './lib/deck';
+import {
+  DEAL_DELAY_MS,
+  DEALER_TURN_DELAY_MS,
+  CONFIRM_RESET_BALANCE,
+  INITIAL_HAND_SIZE,
+  INSURANCE_BET_DIVISOR,
+  FIRST_INDEX,
+  ZERO,
+} from './lib/constants';
 import Hand from './components/Hand';
 import BettingControls from './components/BettingControls';
 import GameControls from './components/GameControls';
@@ -19,7 +28,7 @@ function App() {
     if (state.phase === GAME_PHASES.DEALING) {
       const timer = setTimeout(() => {
         dispatch({ type: 'DEAL_INITIAL' });
-      }, 100);
+      }, DEAL_DELAY_MS);
       return () => clearTimeout(timer);
     }
   }, [state.phase]);
@@ -29,7 +38,7 @@ function App() {
     if (state.phase === GAME_PHASES.DEALER_TURN) {
       const timer = setTimeout(() => {
         dispatch({ type: 'DEALER_PLAY' });
-      }, 1000);
+      }, DEALER_TURN_DELAY_MS);
       return () => clearTimeout(timer);
     }
   }, [state.phase]);
@@ -67,7 +76,7 @@ function App() {
   };
 
   const handleResetBalance = () => {
-    if (confirm('Reset balance to $1000?')) {
+    if (confirm(CONFIRM_RESET_BALANCE)) {
       dispatch({ type: 'RESET_BALANCE' });
     }
   };
@@ -83,7 +92,7 @@ function App() {
   // Determine which actions are available
   const currentHand = state.playerHands[state.activeHandIndex];
   const canDouble = currentHand &&
-    currentHand.cards.length === 2 &&
+    currentHand.cards.length === INITIAL_HAND_SIZE &&
     currentHand.bet <= state.balance &&
     (!currentHand.fromSplit || state.config.doubleAfterSplit);
 
@@ -94,16 +103,16 @@ function App() {
 
   const canSurrender = currentHand &&
     state.config.surrenderAllowed &&
-    currentHand.cards.length === 2 &&
+    currentHand.cards.length === INITIAL_HAND_SIZE &&
     state.playerHands.length === 1;
 
   const canInsurance = state.phase === GAME_PHASES.PLAYER_TURN &&
     state.config.insuranceAllowed &&
-    state.dealerHand.length > 0 &&
-    state.dealerHand[0].rank === 'A' &&
-    state.insurance === 0 &&
-    state.activeHandIndex === 0 &&
-    (state.currentBet / 2) <= state.balance;
+    state.dealerHand.length > ZERO &&
+    state.dealerHand[FIRST_INDEX].rank === 'A' &&
+    state.insurance === ZERO &&
+    state.activeHandIndex === FIRST_INDEX &&
+    (state.currentBet / INSURANCE_BET_DIVISOR) <= state.balance;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-900 to-green-800">

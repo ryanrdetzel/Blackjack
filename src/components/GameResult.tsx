@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
+import {
+  AUTO_DEAL_COUNTDOWN_SECONDS,
+  COUNTDOWN_INTERVAL_MS,
+  ONE,
+  ZERO,
+} from '../lib/constants';
 
 interface GameResultProps {
   result: string | null;
@@ -11,7 +17,7 @@ interface GameResultProps {
 }
 
 export default function GameResult({ result, message, onNewGame, autoDeal = false, onPlaceBet, lastBetAmount }: GameResultProps) {
-  const [countdown, setCountdown] = useState<number | null>(autoDeal ? 3 : null);
+  const [countdown, setCountdown] = useState<number | null>(autoDeal ? AUTO_DEAL_COUNTDOWN_SECONDS : null);
 
   useEffect(() => {
     if (!autoDeal) {
@@ -19,28 +25,28 @@ export default function GameResult({ result, message, onNewGame, autoDeal = fals
       return;
     }
 
-    setCountdown(3);
+    setCountdown(AUTO_DEAL_COUNTDOWN_SECONDS);
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
-        if (prev === null || prev <= 0) {
+        if (prev === null || prev <= ZERO) {
           clearInterval(timer);
           return null;
         }
-        if (prev === 1) {
+        if (prev === ONE) {
           // Auto-deal when countdown reaches 0
           // If we have a last bet amount and onPlaceBet function, place the bet directly
           // This skips the betting panel and goes straight to dealing
           if (lastBetAmount && onPlaceBet) {
-            setTimeout(() => onPlaceBet(lastBetAmount), 0);
+            setTimeout(() => onPlaceBet(lastBetAmount), ZERO);
           } else {
-            setTimeout(() => onNewGame(), 0);
+            setTimeout(() => onNewGame(), ZERO);
           }
-          return 0;
+          return ZERO;
         }
         return prev - 1;
       });
-    }, 1000);
+    }, COUNTDOWN_INTERVAL_MS);
 
     return () => clearInterval(timer);
   }, [autoDeal, onNewGame, onPlaceBet, lastBetAmount]);
@@ -57,7 +63,7 @@ export default function GameResult({ result, message, onNewGame, autoDeal = fals
         {message}
       </div>
       <button onClick={onNewGame} className="btn-success">
-        {countdown !== null && countdown > 0 ? `New Hand (${countdown})` : 'New Hand'}
+        {countdown !== null && countdown > ZERO ? `New Hand (${countdown})` : 'New Hand'}
       </button>
     </div>
   );
