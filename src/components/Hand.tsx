@@ -18,8 +18,8 @@ export default function Hand({ cards, label, hideFirstCard = false, showValue = 
     : value;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="text-white text-lg font-semibold">{label}</div>
+    <div className="flex flex-col items-center gap-2">
+      {label && <div className="text-white text-sm font-semibold">{label}</div>}
 
       <div className="flex gap-2">
         {cards.map((card, index) => (
