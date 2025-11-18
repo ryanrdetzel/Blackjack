@@ -156,8 +156,34 @@ function App() {
           {/* Table markings */}
           <div className="absolute inset-0 rounded-2xl border-2 border-green-600 opacity-30 m-2"></div>
 
+          {/* Status Messages Overlay */}
+          {state.phase === GAME_PHASES.DEALING && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="text-yellow-300 text-3xl font-bold animate-pulse bg-green-900/80 px-8 py-4 rounded-xl shadow-lg">
+                Dealing...
+              </div>
+            </div>
+          )}
+
+          {state.phase === GAME_PHASES.DEALER_TURN && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="text-yellow-300 text-3xl font-bold animate-pulse bg-green-900/80 px-8 py-4 rounded-xl shadow-lg">
+                Dealer's Turn...
+              </div>
+            </div>
+          )}
+
+          {/* Insurance indicator overlay */}
+          {state.insurance > 0 && (
+            <div className="absolute top-4 right-4 z-10">
+              <div className="text-center text-yellow-300 font-bold bg-green-900/90 px-6 py-3 rounded-lg shadow-lg border-2 border-yellow-300">
+                Insurance: ${state.insurance}
+              </div>
+            </div>
+          )}
+
           {/* Dealer Area */}
-          <div className="bg-green-900/30 rounded-2xl p-4 mb-6 border border-green-600/30">
+          <div className="bg-green-900/30 rounded-2xl p-4 mb-4 border border-green-600/30">
             <div className="text-center mb-2">
               <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Dealer</span>
             </div>
@@ -175,51 +201,8 @@ function App() {
             </div>
           </div>
 
-          {/* Center Status Area */}
-          <div className="flex flex-col items-center justify-center my-4 min-h-[80px]">
-            {/* Insurance indicator */}
-            {state.insurance > 0 && (
-              <div className="text-center text-yellow-300 font-bold mb-2 bg-green-900/50 px-4 py-2 rounded-lg">
-                Insurance: ${state.insurance}
-              </div>
-            )}
-
-            {state.phase === GAME_PHASES.BETTING && (
-              <BettingControls
-                balance={state.balance}
-                minBet={state.config.minBet}
-                maxBet={state.config.maxBet}
-                onPlaceBet={handlePlaceBet}
-                lastBetAmount={state.settings.lastBetAmount}
-              />
-            )}
-
-            {state.phase === GAME_PHASES.DEALING && (
-              <div className="text-yellow-300 text-2xl font-bold animate-pulse">
-                Dealing...
-              </div>
-            )}
-
-            {state.phase === GAME_PHASES.DEALER_TURN && (
-              <div className="text-yellow-300 text-2xl font-bold animate-pulse">
-                Dealer's Turn...
-              </div>
-            )}
-
-            {state.phase === GAME_PHASES.GAME_OVER && (
-              <GameResult
-                result={state.result}
-                message={state.resultMessage}
-                onNewGame={handleNewGame}
-                autoDeal={state.settings.autoDeal}
-                onPlaceBet={handlePlaceBet}
-                lastBetAmount={state.settings.lastBetAmount}
-              />
-            )}
-          </div>
-
           {/* Player Area */}
-          <div className="bg-green-900/30 rounded-2xl p-4 mt-6 border border-green-600/30">
+          <div className="bg-green-900/30 rounded-2xl p-4 mt-4 border border-green-600/30">
             <div className="text-center mb-2">
               <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Player</span>
             </div>
@@ -286,6 +269,37 @@ function App() {
           )}
         </div>
       </div>
+
+      {/* Betting Modal */}
+      {state.phase === GAME_PHASES.BETTING && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="max-w-md w-full mx-4">
+            <BettingControls
+              balance={state.balance}
+              minBet={state.config.minBet}
+              maxBet={state.config.maxBet}
+              onPlaceBet={handlePlaceBet}
+              lastBetAmount={state.settings.lastBetAmount}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Game Result Modal */}
+      {state.phase === GAME_PHASES.GAME_OVER && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="max-w-md w-full mx-4">
+            <GameResult
+              result={state.result}
+              message={state.resultMessage}
+              onNewGame={handleNewGame}
+              autoDeal={state.settings.autoDeal}
+              onPlaceBet={handlePlaceBet}
+              lastBetAmount={state.settings.lastBetAmount}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Footer Info */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-gray-400 text-xs p-2 text-center">
