@@ -252,7 +252,7 @@ function App() {
 
           {/* Player Controls */}
           {state.phase === GAME_PHASES.PLAYER_TURN && currentHand && (
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-6 relative z-20">
               <GameControls
                 onHit={handleHit}
                 onStand={handleStand}
