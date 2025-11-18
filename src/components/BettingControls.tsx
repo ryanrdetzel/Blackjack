@@ -1,6 +1,14 @@
 import { useState } from 'react';
 
-export default function BettingControls({ balance, minBet, maxBet, onPlaceBet, lastBetAmount }) {
+interface BettingControlsProps {
+  balance: number;
+  minBet: number;
+  maxBet: number;
+  onPlaceBet: (amount: number) => void;
+  lastBetAmount?: number;
+}
+
+export default function BettingControls({ balance, minBet, maxBet, onPlaceBet, lastBetAmount }: BettingControlsProps) {
   const [showFullControls, setShowFullControls] = useState(false);
   const [betAmount, setBetAmount] = useState(lastBetAmount || minBet);
 
@@ -19,7 +27,7 @@ export default function BettingControls({ balance, minBet, maxBet, onPlaceBet, l
     }
   };
 
-  const handleQuickBet = (amount) => {
+  const handleQuickBet = (amount: number) => {
     if (amount <= balance) {
       setBetAmount(amount);
     }

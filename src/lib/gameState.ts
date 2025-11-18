@@ -1,17 +1,65 @@
 import { createShoe, drawCard, calculateHandValue, isBlackjack, isBust, isPair } from './deck';
 import { dealerShouldHit, determineOutcome, calculatePayout } from './rules';
-import { GAME_PHASES, HAND_STATUS, DEFAULT_CONFIG } from './types';
+import { GAME_PHASES, HAND_STATUS, DEFAULT_CONFIG, Card, GamePhase, HandStatus, GameResult, GameConfig } from './types';
+
+// Game state types
+interface GameHand {
+  cards: Card[];
+  bet: number;
+  status: HandStatus;
+  doubled?: boolean;
+  fromSplit?: boolean;
+  result?: GameResult;
+  payout?: number;
+}
+
+interface GameSettings {
+  autoDeal: boolean;
+  lastBetAmount: number;
+}
+
+export interface GameState {
+  phase: GamePhase;
+  balance: number;
+  currentBet: number;
+  shoe: Card[];
+  discardPile: Card[];
+  playerHands: GameHand[];
+  dealerHand: Card[];
+  activeHandIndex: number;
+  insurance: number;
+  result: string | null;
+  resultMessage: string;
+  config: GameConfig;
+  settings: GameSettings;
+}
+
+// Action types
+type GameAction =
+  | { type: 'PLACE_BET'; amount: number }
+  | { type: 'DEAL_INITIAL' }
+  | { type: 'HIT' }
+  | { type: 'STAND' }
+  | { type: 'DOUBLE' }
+  | { type: 'SPLIT' }
+  | { type: 'SURRENDER' }
+  | { type: 'INSURANCE' }
+  | { type: 'DEALER_PLAY' }
+  | { type: 'NEW_GAME' }
+  | { type: 'RESET_BALANCE' }
+  | { type: 'UPDATE_SETTINGS'; settings: Partial<GameSettings> }
+  | { type: 'UPDATE_CONFIG'; config: Partial<GameConfig> };
 
 /**
  * Create initial game state
  */
-export function createInitialState(config = DEFAULT_CONFIG) {
+export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameState {
   // Handle null config (e.g., when used as lazy initializer in useReducer)
   const baseConfig = config || DEFAULT_CONFIG;
 
   // Load table rules from localStorage or use default config
   const savedTableRules = localStorage.getItem('blackjack_table_rules');
-  const finalConfig = savedTableRules
+  const finalConfig: GameConfig = savedTableRules
     ? { ...baseConfig, ...JSON.parse(savedTableRules) }
     : baseConfig;
 
@@ -21,11 +69,11 @@ export function createInitialState(config = DEFAULT_CONFIG) {
 
   // Load settings from localStorage or use defaults
   const savedSettings = localStorage.getItem('blackjack_settings');
-  const defaultSettings = {
+  const defaultSettings: GameSettings = {
     autoDeal: false,
     lastBetAmount: finalConfig.minBet,
   };
-  const settings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+  const settings: GameSettings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
 
   return {
     phase: GAME_PHASES.BETTING,
@@ -47,7 +95,7 @@ export function createInitialState(config = DEFAULT_CONFIG) {
 /**
  * Create a new hand object
  */
-function createHand(cards, bet, fromSplit = false) {
+function createHand(cards: Card[], bet: number, fromSplit: boolean = false): GameHand {
   return {
     cards,
     bet,
@@ -60,7 +108,7 @@ function createHand(cards, bet, fromSplit = false) {
 /**
  * Game reducer - handles all game state transitions
  */
-export function gameReducer(state, action) {
+export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'PLACE_BET': {
       const { amount } = action;
@@ -71,7 +119,7 @@ export function gameReducer(state, action) {
         return state;
       }
       // Save last bet amount to settings
-      const newSettings = {
+      const newSettings: GameSettings = {
         ...state.settings,
         lastBetAmount: amount,
       };
@@ -87,8 +135,8 @@ export function gameReducer(state, action) {
 
     case 'DEAL_INITIAL': {
       let { shoe } = state;
-      const playerCards = [];
-      const dealerCards = [];
+      const playerCards: Card[] = [];
+      const dealerCards: Card[] = [];
 
       // Deal player card 1
       let draw = drawCard(shoe);
@@ -111,7 +159,7 @@ export function gameReducer(state, action) {
       shoe = draw.remainingShoe;
 
       // Create initial player hand
-      const playerHands = [createHand(playerCards, state.currentBet, false)];
+      const playerHands: GameHand[] = [createHand(playerCards, state.currentBet, false)];
 
       // Check for immediate blackjack
       const playerBJ = isBlackjack(playerCards);
@@ -414,7 +462,7 @@ export function gameReducer(state, action) {
 
       // Determine outcome for each hand
       let totalPayout = 0;
-      let resultMessages = [];
+      let resultMessages: string[] = [];
       const dealerBlackjack = isBlackjack(dealerHand);
 
       // Process insurance bet
@@ -430,7 +478,7 @@ export function gameReducer(state, action) {
 
       // Process each hand
       state.playerHands.forEach((hand, index) => {
-        let result;
+        let result: string;
         let handPayout = 0;
 
         if (hand.status === HAND_STATUS.SURRENDER) {
@@ -516,7 +564,7 @@ export function gameReducer(state, action) {
     }
 
     case 'UPDATE_SETTINGS': {
-      const newSettings = {
+      const newSettings: GameSettings = {
         ...state.settings,
         ...action.settings,
       };
@@ -528,7 +576,7 @@ export function gameReducer(state, action) {
     }
 
     case 'UPDATE_CONFIG': {
-      const newConfig = {
+      const newConfig: GameConfig = {
         ...state.config,
         ...action.config,
       };
@@ -558,7 +606,7 @@ export function gameReducer(state, action) {
   }
 }
 
-function getResultMessage(result, payout, bet) {
+function getResultMessage(result: GameResult, payout: number, bet: number): string {
   switch (result) {
     case 'blackjack':
       return `Blackjack! You win $${payout - bet}`;

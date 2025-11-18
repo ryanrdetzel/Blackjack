@@ -1,18 +1,29 @@
-export default function TableRules({ config, onUpdateConfig, isOpen, onClose }) {
+import { GameConfig } from '../lib/types';
+
+interface TableRulesProps {
+  config: GameConfig;
+  onUpdateConfig: (config: Partial<GameConfig>) => void;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: TableRulesProps) {
   if (!isOpen) return null;
 
-  const handleToggle = (key) => {
-    onUpdateConfig({ [key]: !config[key] });
-  };
-
-  const handleNumberChange = (key, value) => {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue)) {
-      onUpdateConfig({ [key]: numValue });
+  const handleToggle = (key: keyof GameConfig) => {
+    if (typeof config[key] === 'boolean') {
+      onUpdateConfig({ [key]: !config[key] });
     }
   };
 
-  const handlePayoutChange = (numerator, denominator) => {
+  const handleNumberChange = (key: keyof GameConfig, value: string) => {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue)) {
+      onUpdateConfig({ [key]: numValue } as Partial<GameConfig>);
+    }
+  };
+
+  const handlePayoutChange = (numerator: number, denominator: number) => {
     onUpdateConfig({ blackjackPayout: [numerator, denominator] });
   };
 

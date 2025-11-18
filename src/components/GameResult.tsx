@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 
-export default function GameResult({ result, message, onNewGame, autoDeal = false, onPlaceBet, lastBetAmount }) {
-  const [countdown, setCountdown] = useState(autoDeal ? 3 : null);
+interface GameResultProps {
+  result: string | null;
+  message: string;
+  onNewGame: () => void;
+  autoDeal?: boolean;
+  onPlaceBet?: (amount: number) => void;
+  lastBetAmount?: number;
+}
+
+export default function GameResult({ result, message, onNewGame, autoDeal = false, onPlaceBet, lastBetAmount }: GameResultProps) {
+  const [countdown, setCountdown] = useState<number | null>(autoDeal ? 3 : null);
 
   useEffect(() => {
     if (!autoDeal) {

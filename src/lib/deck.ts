@@ -1,10 +1,10 @@
-import { RANKS, SUITS } from './types';
+import { RANKS, SUITS, Card } from './types';
 
 /**
  * Create a single 52-card deck
  */
-export function createDeck() {
-  const deck = [];
+export function createDeck(): Card[] {
+  const deck: Card[] = [];
   for (const suit of SUITS) {
     for (const rank of RANKS) {
       deck.push({ rank, suit });
@@ -16,8 +16,8 @@ export function createDeck() {
 /**
  * Create a shoe with multiple decks
  */
-export function createShoe(deckCount = 6) {
-  let shoe = [];
+export function createShoe(deckCount: number = 6): Card[] {
+  let shoe: Card[] = [];
   for (let i = 0; i < deckCount; i++) {
     shoe = shoe.concat(createDeck());
   }
@@ -27,7 +27,7 @@ export function createShoe(deckCount = 6) {
 /**
  * Fisher-Yates shuffle algorithm
  */
-export function shuffleDeck(deck) {
+export function shuffleDeck(deck: Card[]): Card[] {
   const shuffled = [...deck];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -39,7 +39,7 @@ export function shuffleDeck(deck) {
 /**
  * Draw a card from the shoe
  */
-export function drawCard(shoe) {
+export function drawCard(shoe: Card[]): { card: Card; remainingShoe: Card[] } {
   if (shoe.length === 0) {
     throw new Error('Shoe is empty');
   }
@@ -53,7 +53,7 @@ export function drawCard(shoe) {
  * Get the numeric value of a card
  * Aces can be 1 or 11 (handled in hand calculation)
  */
-export function getCardValue(card) {
+export function getCardValue(card: Card): number {
   if (card.rank === 'A') {
     return 11; // Default to 11, will adjust for soft hands
   }
@@ -67,7 +67,7 @@ export function getCardValue(card) {
  * Calculate hand value, accounting for soft aces
  * Returns { value, isSoft }
  */
-export function calculateHandValue(cards) {
+export function calculateHandValue(cards: Card[]): { value: number; isSoft: boolean } {
   let value = 0;
   let aces = 0;
 
@@ -94,7 +94,7 @@ export function calculateHandValue(cards) {
 /**
  * Check if a hand is blackjack (21 with 2 cards)
  */
-export function isBlackjack(cards) {
+export function isBlackjack(cards: Card[]): boolean {
   if (cards.length !== 2) return false;
   const { value } = calculateHandValue(cards);
   return value === 21;
@@ -103,7 +103,7 @@ export function isBlackjack(cards) {
 /**
  * Check if a hand is bust
  */
-export function isBust(cards) {
+export function isBust(cards: Card[]): boolean {
   const { value } = calculateHandValue(cards);
   return value > 21;
 }
@@ -111,7 +111,7 @@ export function isBust(cards) {
 /**
  * Check if a hand is a pair (can be split)
  */
-export function isPair(cards) {
+export function isPair(cards: Card[]): boolean {
   if (cards.length !== 2) return false;
 
   // Both cards must have same rank
@@ -122,7 +122,7 @@ export function isPair(cards) {
  * Check if two cards have the same value (for split purposes)
  * Some casinos allow splitting any 10-value cards (10, J, Q, K)
  */
-export function isSameValue(cards) {
+export function isSameValue(cards: Card[]): boolean {
   if (cards.length !== 2) return false;
 
   const value1 = getCardValue(cards[0]);

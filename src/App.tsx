@@ -1,6 +1,6 @@
 import { useReducer, useEffect, useState } from 'react';
-import { gameReducer, createInitialState } from './lib/gameState';
-import { GAME_PHASES, HAND_STATUS } from './lib/types';
+import { gameReducer, createInitialState, GameState } from './lib/gameState';
+import { GAME_PHASES, HAND_STATUS, GameConfig } from './lib/types';
 import { isPair } from './lib/deck';
 import Hand from './components/Hand';
 import BettingControls from './components/BettingControls';
@@ -10,7 +10,7 @@ import Settings from './components/Settings';
 import TableRules from './components/TableRules';
 
 function App() {
-  const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
+  const [state, dispatch] = useReducer(gameReducer, null as unknown as GameState, createInitialState);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tableRulesOpen, setTableRulesOpen] = useState(false);
 
@@ -34,7 +34,7 @@ function App() {
     }
   }, [state.phase]);
 
-  const handlePlaceBet = (amount) => {
+  const handlePlaceBet = (amount: number) => {
     dispatch({ type: 'PLACE_BET', amount });
   };
 
@@ -72,11 +72,11 @@ function App() {
     }
   };
 
-  const handleUpdateSettings = (settings) => {
+  const handleUpdateSettings = (settings: Partial<{ autoDeal: boolean; lastBetAmount: number }>) => {
     dispatch({ type: 'UPDATE_SETTINGS', settings });
   };
 
-  const handleUpdateConfig = (config) => {
+  const handleUpdateConfig = (config: Partial<GameConfig>) => {
     dispatch({ type: 'UPDATE_CONFIG', config });
   };
 
@@ -222,7 +222,6 @@ function App() {
                       cards={hand.cards}
                       label={handLabel}
                       showValue={true}
-                      status={hand.status}
                     />
                     {hand.status === HAND_STATUS.BUST && (
                       <div className="text-center text-red-400 font-bold mt-2">BUST</div>
