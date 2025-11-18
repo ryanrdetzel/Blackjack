@@ -150,9 +150,9 @@ function App() {
       </div>
 
       {/* Game Table */}
-      <div className="max-w-6xl mx-auto p-8">
+      <div className="max-w-4xl mx-auto p-4">
         {/* Blackjack Table Felt */}
-        <div className="bg-gradient-to-br from-green-800 via-green-700 to-green-800 rounded-3xl shadow-2xl border-8 border-amber-900 p-6 relative">
+        <div className="bg-gradient-to-br from-green-800 via-green-700 to-green-800 rounded-3xl shadow-2xl border-4 border-amber-900 p-4 relative">
           {/* Table markings */}
           <div className="absolute inset-0 rounded-2xl border-2 border-green-600 opacity-30 m-2"></div>
 
@@ -183,11 +183,11 @@ function App() {
           )}
 
           {/* Dealer Area */}
-          <div className="bg-green-900/30 rounded-2xl p-4 mb-4 border border-green-600/30">
+          <div className="bg-green-900/30 rounded-2xl p-3 mb-3 border border-green-600/30">
             <div className="text-center mb-2">
               <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Dealer</span>
             </div>
-            <div className="min-h-[240px] flex items-center justify-center">
+            <div className="min-h-[180px] flex items-center justify-center">
               {state.dealerHand.length > 0 ? (
                 <Hand
                   cards={state.dealerHand}
@@ -202,11 +202,11 @@ function App() {
           </div>
 
           {/* Player Area */}
-          <div className="bg-green-900/30 rounded-2xl p-4 mt-4 border border-green-600/30">
+          <div className="bg-green-900/30 rounded-2xl p-3 mt-3 border border-green-600/30">
             <div className="text-center mb-2">
               <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Player</span>
             </div>
-            <div className="min-h-[240px] flex items-center justify-center">
+            <div className="min-h-[180px] flex items-center justify-center">
               {state.playerHands.length > 0 ? (
                 <div className="flex justify-center gap-8 flex-wrap">
                   {state.playerHands.map((hand, index) => {
