@@ -4,6 +4,9 @@ import InsuranceIndicator from './InsuranceIndicator';
 import DealerArea from './DealerArea';
 import PlayerArea from './PlayerArea';
 import GameControls from '../GameControls';
+import StrategyHint from '../learning/StrategyHint';
+import LearningStats from '../learning/LearningStats';
+import { LearningModeState } from '../../lib/gameState';
 
 interface GameTableProps {
   phase: string;
@@ -22,6 +25,8 @@ interface GameTableProps {
   onSplit: () => void;
   onSurrender: () => void;
   onInsurance: () => void;
+  learningMode?: LearningModeState;
+  learningModeEnabled?: boolean;
 }
 
 export default function GameTable({
@@ -41,9 +46,16 @@ export default function GameTable({
   onSplit,
   onSurrender,
   onInsurance,
+  learningMode,
+  learningModeEnabled = false,
 }: GameTableProps) {
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4 space-y-3">
+      {/* Learning Stats */}
+      {learningMode && (
+        <LearningStats learningMode={learningMode} enabled={learningModeEnabled} />
+      )}
+
       <div className="bg-gradient-to-br from-green-800 via-green-700 to-green-800 rounded-3xl shadow-2xl border-4 border-amber-900 p-4 relative">
         {/* Table markings */}
         <div className="absolute inset-0 rounded-2xl border-2 border-green-600 opacity-30 m-2"></div>
@@ -62,6 +74,15 @@ export default function GameTable({
           isPlayerTurn={phase === GAME_PHASES.PLAYER_TURN}
         />
 
+        {/* Strategy Hint */}
+        {phase === GAME_PHASES.PLAYER_TURN && learningMode && learningModeEnabled && (
+          <div className="flex justify-center mt-4 relative z-20">
+            <div className="max-w-md">
+              <StrategyHint strategy={learningMode.currentStrategy} show={true} />
+            </div>
+          </div>
+        )}
+
         {/* Player Controls */}
         {phase === GAME_PHASES.PLAYER_TURN && currentHand && (
           <div className="flex justify-center mt-6 relative z-20">
@@ -76,6 +97,8 @@ export default function GameTable({
               canSplit={canSplit}
               canSurrender={canSurrender}
               canInsurance={canInsurance}
+              recommendations={learningMode?.currentStrategy?.recommendations}
+              learningModeEnabled={learningModeEnabled}
             />
           </div>
         )}
