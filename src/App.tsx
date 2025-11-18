@@ -1,6 +1,6 @@
 import { useReducer, useEffect, useState } from 'react';
 import { gameReducer, createInitialState, GameState } from './lib/gameState';
-import { GAME_PHASES, HAND_STATUS, GameConfig } from './lib/types';
+import { GAME_PHASES, GameConfig } from './lib/types';
 import { isPair } from './lib/deck';
 import {
   DEAL_DELAY_MS,
@@ -11,12 +11,12 @@ import {
   FIRST_INDEX,
   ZERO,
 } from './lib/constants';
-import Hand from './components/Hand';
 import BettingControls from './components/BettingControls';
-import GameControls from './components/GameControls';
 import GameResult from './components/GameResult';
 import Settings from './components/Settings';
 import TableRules from './components/TableRules';
+import Header from './components/header/Header';
+import GameTable from './components/game/GameTable';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null as unknown as GameState, createInitialState);
@@ -116,159 +116,31 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-900 to-green-800">
-      {/* Header */}
-      <div className="bg-gray-900 text-white p-4 shadow-lg">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-3xl font-bold">♠️ Blackjack</h1>
-          <div className="flex items-center gap-6">
-            <div className="text-right">
-              <div className="text-sm text-gray-400">Balance</div>
-              <div className="text-2xl font-bold text-green-400">${state.balance.toFixed(2)}</div>
-            </div>
-            <button
-              onClick={handleResetBalance}
-              className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded"
-            >
-              Reset
-            </button>
-            <button
-              onClick={() => setTableRulesOpen(true)}
-              className="text-2xl px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded"
-              title="Table Rules"
-            >
-              📋
-            </button>
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="text-2xl px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded"
-              title="Settings"
-            >
-              ⚙️
-            </button>
-          </div>
-        </div>
-      </div>
+      <Header
+        balance={state.balance}
+        onResetBalance={handleResetBalance}
+        onOpenTableRules={() => setTableRulesOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
 
-      {/* Game Table */}
-      <div className="max-w-4xl mx-auto p-4">
-        {/* Blackjack Table Felt */}
-        <div className="bg-gradient-to-br from-green-800 via-green-700 to-green-800 rounded-3xl shadow-2xl border-4 border-amber-900 p-4 relative">
-          {/* Table markings */}
-          <div className="absolute inset-0 rounded-2xl border-2 border-green-600 opacity-30 m-2"></div>
-
-          {/* Status Messages Overlay */}
-          {state.phase === GAME_PHASES.DEALING && (
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-              <div className="text-yellow-300 text-3xl font-bold animate-pulse bg-green-900/80 px-8 py-4 rounded-xl shadow-lg">
-                Dealing...
-              </div>
-            </div>
-          )}
-
-          {state.phase === GAME_PHASES.DEALER_TURN && (
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-              <div className="text-yellow-300 text-3xl font-bold animate-pulse bg-green-900/80 px-8 py-4 rounded-xl shadow-lg">
-                Dealer's Turn...
-              </div>
-            </div>
-          )}
-
-          {/* Insurance indicator overlay */}
-          {state.insurance > 0 && (
-            <div className="absolute top-4 right-4 z-10">
-              <div className="text-center text-yellow-300 font-bold bg-green-900/90 px-6 py-3 rounded-lg shadow-lg border-2 border-yellow-300">
-                Insurance: ${state.insurance}
-              </div>
-            </div>
-          )}
-
-          {/* Dealer Area */}
-          <div className="bg-green-900/30 rounded-2xl p-3 mb-3 border border-green-600/30">
-            <div className="text-center mb-2">
-              <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Dealer</span>
-            </div>
-            <div className="min-h-[180px] flex items-center justify-center">
-              {state.dealerHand.length > 0 ? (
-                <Hand
-                  cards={state.dealerHand}
-                  label=""
-                  hideFirstCard={state.phase === GAME_PHASES.PLAYER_TURN}
-                  showValue={true}
-                />
-              ) : (
-                <div className="text-green-600/50 text-lg">Dealer's cards will appear here</div>
-              )}
-            </div>
-          </div>
-
-          {/* Player Area */}
-          <div className="bg-green-900/30 rounded-2xl p-3 mt-3 border border-green-600/30">
-            <div className="text-center mb-2">
-              <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Player</span>
-            </div>
-            <div className="min-h-[180px] flex items-center justify-center">
-              {state.playerHands.length > 0 ? (
-                <div className="flex justify-center gap-8 flex-wrap">
-                  {state.playerHands.map((hand, index) => {
-                    const isActive = index === state.activeHandIndex && state.phase === GAME_PHASES.PLAYER_TURN;
-                    const handLabel = state.playerHands.length > 1
-                      ? `Hand ${index + 1} (Bet: $${hand.bet})`
-                      : `Bet: $${hand.bet}`;
-
-                    return (
-                      <div
-                        key={index}
-                        className={`transition-all ${
-                          isActive
-                            ? 'ring-4 ring-yellow-400 rounded-lg p-2 shadow-lg shadow-yellow-400/50'
-                            : hand.status === HAND_STATUS.BUST
-                            ? 'opacity-50'
-                            : 'opacity-75'
-                        }`}
-                      >
-                        <Hand
-                          cards={hand.cards}
-                          label={handLabel}
-                          showValue={true}
-                        />
-                        {hand.status === HAND_STATUS.BUST && (
-                          <div className="text-center text-red-400 font-bold mt-2">BUST</div>
-                        )}
-                        {hand.status === HAND_STATUS.SURRENDER && (
-                          <div className="text-center text-orange-400 font-bold mt-2">SURRENDERED</div>
-                        )}
-                        {hand.doubled && (
-                          <div className="text-center text-blue-400 font-semibold mt-1 text-sm">Doubled</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-green-600/50 text-lg">Your cards will appear here</div>
-              )}
-            </div>
-          </div>
-
-          {/* Player Controls */}
-          {state.phase === GAME_PHASES.PLAYER_TURN && currentHand && (
-            <div className="flex justify-center mt-6 relative z-20">
-              <GameControls
-                onHit={handleHit}
-                onStand={handleStand}
-                onDouble={handleDouble}
-                onSplit={handleSplit}
-                onSurrender={handleSurrender}
-                onInsurance={handleInsurance}
-                canDouble={canDouble}
-                canSplit={canSplit}
-                canSurrender={canSurrender}
-                canInsurance={canInsurance}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+      <GameTable
+        phase={state.phase}
+        dealerHand={state.dealerHand}
+        playerHands={state.playerHands}
+        activeHandIndex={state.activeHandIndex}
+        insurance={state.insurance}
+        currentHand={currentHand}
+        canDouble={canDouble}
+        canSplit={canSplit}
+        canSurrender={canSurrender}
+        canInsurance={canInsurance}
+        onHit={handleHit}
+        onStand={handleStand}
+        onDouble={handleDouble}
+        onSplit={handleSplit}
+        onSurrender={handleSurrender}
+        onInsurance={handleInsurance}
+      />
 
       {/* Betting Modal */}
       {state.phase === GAME_PHASES.BETTING && (
