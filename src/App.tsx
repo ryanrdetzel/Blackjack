@@ -15,6 +15,7 @@ import BettingControls from './components/BettingControls';
 import GameResult from './components/GameResult';
 import Settings from './components/Settings';
 import TableRules from './components/TableRules';
+import ConfigurationManager from './components/ConfigurationManager';
 import Header from './components/header/Header';
 import GameTable from './components/game/GameTable';
 
@@ -22,6 +23,7 @@ function App() {
   const [state, dispatch] = useReducer(gameReducer, null as unknown as GameState, createInitialState);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tableRulesOpen, setTableRulesOpen] = useState(false);
+  const [configManagerOpen, setConfigManagerOpen] = useState(false);
 
   // Auto-deal after bet is placed
   useEffect(() => {
@@ -89,6 +91,10 @@ function App() {
     dispatch({ type: 'UPDATE_CONFIG', config });
   };
 
+  const handleLoadConfig = (config: GameConfig) => {
+    dispatch({ type: 'LOAD_CONFIG', config });
+  };
+
   // Determine which actions are available
   const currentHand = state.playerHands[state.activeHandIndex];
   const canDouble = currentHand &&
@@ -119,6 +125,7 @@ function App() {
       <Header
         balance={state.balance}
         onResetBalance={handleResetBalance}
+        onOpenConfigurations={() => setConfigManagerOpen(true)}
         onOpenTableRules={() => setTableRulesOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
       />
@@ -188,6 +195,14 @@ function App() {
         onUpdateSettings={handleUpdateSettings}
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+      />
+
+      {/* Configuration Manager Modal */}
+      <ConfigurationManager
+        currentConfig={state.config}
+        onLoadConfig={handleLoadConfig}
+        isOpen={configManagerOpen}
+        onClose={() => setConfigManagerOpen(false)}
       />
 
       {/* Table Rules Modal */}

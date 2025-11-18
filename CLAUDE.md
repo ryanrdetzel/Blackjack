@@ -91,6 +91,9 @@ Basic gameplay: hit, stand, betting, dealer AI, balance tracking, card animation
 ### Milestone 2 ✅
 Advanced moves: double down, split pairs, insurance, surrender, multi-hand support
 
+### Milestone 3 ✅
+Customization system: preset configurations (Vegas Strip, Atlantic City, European, etc.), save/load custom configurations, export/import JSON, configuration manager UI
+
 ## Current Architecture Decisions
 
 ### Why useReducer?
@@ -128,10 +131,11 @@ pnpm preview
 ## Future Development Notes
 
 See `PLAN.md` for detailed roadmap. Key upcoming features:
-- **Milestone 3**: Customizable game configurations
 - **Milestone 4**: Strategy hints and learning mode
 - **Milestone 5**: Speed training mode
 - **Milestone 6**: Statistics and hand history
+- **Milestone 7**: Advanced features (side bets, card counting, achievements)
+- **Milestone 8**: Sharing & portability (URL encoding, QR codes)
 
 ## Tips for Claude Sessions
 
@@ -159,6 +163,32 @@ See `PLAN.md` for detailed roadmap. Key upcoming features:
 3. **Modern**: Showcase React best practices
 4. **Maintainable**: Clean, well-organized code
 5. **Extensible**: Easy to add new features
+
+## Milestone 3 Implementation Details
+
+### Configuration System
+- **Location**: `src/lib/configManager.ts` - Helper functions for saving/loading configurations
+- **Presets**: Six preset configurations available in `src/lib/types.ts` (PRESET_CONFIGS)
+  - Standard (default)
+  - Vegas Strip
+  - Atlantic City
+  - European
+  - Liberal Rules
+  - Vegas Downtown (6:5)
+  - High Roller
+- **UI**: `src/components/ConfigurationManager.tsx` - Full-featured configuration manager
+- **Actions**: `LOAD_CONFIG` action in `src/lib/gameState.ts` for loading complete configurations
+- **Storage**: Custom configurations saved to localStorage with key `blackjack_saved_configs`
+
+### Features
+- Load preset configurations
+- Save current configuration with custom name
+- Delete custom configurations (presets are read-only)
+- Duplicate any configuration
+- Export configuration as JSON file
+- Import configuration from JSON file
+- Configuration validation on import
+- Automatic name uniqueness handling
 
 ---
 

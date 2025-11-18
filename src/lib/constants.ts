@@ -137,6 +137,16 @@ export const STORAGE_KEY_BALANCE = 'blackjack_balance';
  */
 export const STORAGE_KEY_SETTINGS = 'blackjack_settings';
 
+/**
+ * LocalStorage key for saved custom configurations (Milestone 3)
+ */
+export const STORAGE_KEY_SAVED_CONFIGS = 'blackjack_saved_configs';
+
+/**
+ * LocalStorage key for active configuration name (Milestone 3)
+ */
+export const STORAGE_KEY_ACTIVE_CONFIG = 'blackjack_active_config';
+
 // ============================================================================
 // UI MESSAGES
 // ============================================================================

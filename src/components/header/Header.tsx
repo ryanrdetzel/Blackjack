@@ -4,6 +4,7 @@ import HeaderButtons from './HeaderButtons';
 interface HeaderProps {
   balance: number;
   onResetBalance: () => void;
+  onOpenConfigurations: () => void;
   onOpenTableRules: () => void;
   onOpenSettings: () => void;
 }
@@ -11,6 +12,7 @@ interface HeaderProps {
 export default function Header({
   balance,
   onResetBalance,
+  onOpenConfigurations,
   onOpenTableRules,
   onOpenSettings
 }: HeaderProps) {
@@ -20,7 +22,11 @@ export default function Header({
         <h1 className="text-3xl font-bold">♠️ Blackjack</h1>
         <div className="flex items-center gap-6">
           <BalanceDisplay balance={balance} onResetBalance={onResetBalance} />
-          <HeaderButtons onOpenTableRules={onOpenTableRules} onOpenSettings={onOpenSettings} />
+          <HeaderButtons
+            onOpenConfigurations={onOpenConfigurations}
+            onOpenTableRules={onOpenTableRules}
+            onOpenSettings={onOpenSettings}
+          />
         </div>
       </div>
     </div>
