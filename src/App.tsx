@@ -151,28 +151,39 @@ function App() {
 
       {/* Game Table */}
       <div className="max-w-6xl mx-auto p-8">
-        <div className="space-y-8">
-          {/* Dealer's Hand */}
-          {state.dealerHand.length > 0 && (
-            <div className="flex justify-center">
-              <Hand
-                cards={state.dealerHand}
-                label="Dealer"
-                hideFirstCard={state.phase === GAME_PHASES.PLAYER_TURN}
-                showValue={true}
-              />
-            </div>
-          )}
+        {/* Blackjack Table Felt */}
+        <div className="bg-gradient-to-br from-green-800 via-green-700 to-green-800 rounded-3xl shadow-2xl border-8 border-amber-900 p-6 relative">
+          {/* Table markings */}
+          <div className="absolute inset-0 rounded-2xl border-2 border-green-600 opacity-30 m-2"></div>
 
-          {/* Insurance indicator */}
-          {state.insurance > 0 && (
-            <div className="text-center text-yellow-300 font-bold">
-              Insurance: ${state.insurance}
+          {/* Dealer Area */}
+          <div className="bg-green-900/30 rounded-2xl p-4 mb-6 border border-green-600/30">
+            <div className="text-center mb-2">
+              <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Dealer</span>
             </div>
-          )}
+            <div className="min-h-[240px] flex items-center justify-center">
+              {state.dealerHand.length > 0 ? (
+                <Hand
+                  cards={state.dealerHand}
+                  label=""
+                  hideFirstCard={state.phase === GAME_PHASES.PLAYER_TURN}
+                  showValue={true}
+                />
+              ) : (
+                <div className="text-green-600/50 text-lg">Dealer's cards will appear here</div>
+              )}
+            </div>
+          </div>
 
-          {/* Game Status Area */}
-          <div className="flex justify-center min-h-[200px] items-center">
+          {/* Center Status Area */}
+          <div className="flex flex-col items-center justify-center my-4 min-h-[80px]">
+            {/* Insurance indicator */}
+            {state.insurance > 0 && (
+              <div className="text-center text-yellow-300 font-bold mb-2 bg-green-900/50 px-4 py-2 rounded-lg">
+                Insurance: ${state.insurance}
+              </div>
+            )}
+
             {state.phase === GAME_PHASES.BETTING && (
               <BettingControls
                 balance={state.balance}
@@ -184,13 +195,13 @@ function App() {
             )}
 
             {state.phase === GAME_PHASES.DEALING && (
-              <div className="text-white text-2xl font-bold animate-pulse">
+              <div className="text-yellow-300 text-2xl font-bold animate-pulse">
                 Dealing...
               </div>
             )}
 
             {state.phase === GAME_PHASES.DEALER_TURN && (
-              <div className="text-white text-2xl font-bold animate-pulse">
+              <div className="text-yellow-300 text-2xl font-bold animate-pulse">
                 Dealer's Turn...
               </div>
             )}
@@ -207,49 +218,58 @@ function App() {
             )}
           </div>
 
-          {/* Player's Hands */}
-          {state.playerHands.length > 0 && (
-            <div className="flex justify-center gap-8 flex-wrap">
-              {state.playerHands.map((hand, index) => {
-                const isActive = index === state.activeHandIndex && state.phase === GAME_PHASES.PLAYER_TURN;
-                const handLabel = state.playerHands.length > 1
-                  ? `Hand ${index + 1} (Bet: $${hand.bet})`
-                  : `Your Hand (Bet: $${hand.bet})`;
-
-                return (
-                  <div
-                    key={index}
-                    className={`transition-all ${
-                      isActive
-                        ? 'ring-4 ring-yellow-400 rounded-lg p-2 shadow-lg shadow-yellow-400/50'
-                        : hand.status === HAND_STATUS.BUST
-                        ? 'opacity-50'
-                        : 'opacity-75'
-                    }`}
-                  >
-                    <Hand
-                      cards={hand.cards}
-                      label={handLabel}
-                      showValue={true}
-                    />
-                    {hand.status === HAND_STATUS.BUST && (
-                      <div className="text-center text-red-400 font-bold mt-2">BUST</div>
-                    )}
-                    {hand.status === HAND_STATUS.SURRENDER && (
-                      <div className="text-center text-orange-400 font-bold mt-2">SURRENDERED</div>
-                    )}
-                    {hand.doubled && (
-                      <div className="text-center text-blue-400 font-semibold mt-1 text-sm">Doubled</div>
-                    )}
-                  </div>
-                );
-              })}
+          {/* Player Area */}
+          <div className="bg-green-900/30 rounded-2xl p-4 mt-6 border border-green-600/30">
+            <div className="text-center mb-2">
+              <span className="text-yellow-300 text-sm font-semibold tracking-wider uppercase">Player</span>
             </div>
-          )}
+            <div className="min-h-[240px] flex items-center justify-center">
+              {state.playerHands.length > 0 ? (
+                <div className="flex justify-center gap-8 flex-wrap">
+                  {state.playerHands.map((hand, index) => {
+                    const isActive = index === state.activeHandIndex && state.phase === GAME_PHASES.PLAYER_TURN;
+                    const handLabel = state.playerHands.length > 1
+                      ? `Hand ${index + 1} (Bet: $${hand.bet})`
+                      : `Bet: $${hand.bet}`;
+
+                    return (
+                      <div
+                        key={index}
+                        className={`transition-all ${
+                          isActive
+                            ? 'ring-4 ring-yellow-400 rounded-lg p-2 shadow-lg shadow-yellow-400/50'
+                            : hand.status === HAND_STATUS.BUST
+                            ? 'opacity-50'
+                            : 'opacity-75'
+                        }`}
+                      >
+                        <Hand
+                          cards={hand.cards}
+                          label={handLabel}
+                          showValue={true}
+                        />
+                        {hand.status === HAND_STATUS.BUST && (
+                          <div className="text-center text-red-400 font-bold mt-2">BUST</div>
+                        )}
+                        {hand.status === HAND_STATUS.SURRENDER && (
+                          <div className="text-center text-orange-400 font-bold mt-2">SURRENDERED</div>
+                        )}
+                        {hand.doubled && (
+                          <div className="text-center text-blue-400 font-semibold mt-1 text-sm">Doubled</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-green-600/50 text-lg">Your cards will appear here</div>
+              )}
+            </div>
+          </div>
 
           {/* Player Controls */}
           {state.phase === GAME_PHASES.PLAYER_TURN && currentHand && (
-            <div className="flex justify-center">
+            <div className="flex justify-center mt-6">
               <GameControls
                 onHit={handleHit}
                 onStand={handleStand}
