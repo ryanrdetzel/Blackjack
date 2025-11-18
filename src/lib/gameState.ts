@@ -15,6 +15,7 @@ import {
   NEXT_INDEX_OFFSET,
   ZERO,
 } from './constants';
+import { getBasicStrategy, StrategyDecision } from './strategy';
 
 // Game state types
 interface GameHand {
@@ -30,6 +31,30 @@ interface GameHand {
 interface GameSettings {
   autoDeal: boolean;
   lastBetAmount: number;
+  learningModeEnabled: boolean;
+  showHints: boolean;
+  showExpectedValue: boolean;
+}
+
+// Learning mode mistake tracking
+export interface MistakeRecord {
+  handDescription: string;
+  dealerUpCard: string;
+  optimalAction: string;
+  playerAction: string;
+  timestamp: number;
+}
+
+export interface LearningModeState {
+  currentStrategy: StrategyDecision | null;
+  mistakes: MistakeRecord[];
+  correctDecisions: number;
+  totalDecisions: number;
+  lastDecision: {
+    action: string;
+    wasCorrect: boolean;
+    optimalAction: string;
+  } | null;
 }
 
 export interface GameState {
@@ -46,6 +71,7 @@ export interface GameState {
   resultMessage: string;
   config: GameConfig;
   settings: GameSettings;
+  learningMode: LearningModeState;
 }
 
 // Action types
@@ -63,7 +89,11 @@ type GameAction =
   | { type: 'RESET_BALANCE' }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<GameSettings> }
   | { type: 'UPDATE_CONFIG'; config: Partial<GameConfig> }
-  | { type: 'LOAD_CONFIG'; config: GameConfig };
+  | { type: 'LOAD_CONFIG'; config: GameConfig }
+  | { type: 'TOGGLE_LEARNING_MODE' }
+  | { type: 'UPDATE_STRATEGY_HINT' }
+  | { type: 'RECORD_DECISION'; action: string }
+  | { type: 'CLEAR_MISTAKES' };
 
 /**
  * Create initial game state
@@ -87,8 +117,11 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
   const defaultSettings: GameSettings = {
     autoDeal: false,
     lastBetAmount: finalConfig.minBet,
+    learningModeEnabled: false,
+    showHints: true,
+    showExpectedValue: false,
   };
-  const settings: GameSettings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+  const settings: GameSettings = savedSettings ? { ...defaultSettings, ...JSON.parse(savedSettings) } : defaultSettings;
 
   return {
     phase: GAME_PHASES.BETTING,
@@ -104,6 +137,13 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
     resultMessage: '',
     config: finalConfig,
     settings, // Game settings (auto-deal, last bet, etc.)
+    learningMode: {
+      currentStrategy: null,
+      mistakes: [],
+      correctDecisions: 0,
+      totalDecisions: 0,
+      lastDecision: null,
+    },
   };
 }
 
@@ -668,6 +708,117 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         result: null,
         resultMessage: '',
         settings: newSettings,
+      };
+    }
+
+    case 'TOGGLE_LEARNING_MODE': {
+      const newSettings = {
+        ...state.settings,
+        learningModeEnabled: !state.settings.learningModeEnabled,
+      };
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(newSettings));
+      return {
+        ...state,
+        settings: newSettings,
+      };
+    }
+
+    case 'UPDATE_STRATEGY_HINT': {
+      // Only update strategy hint if learning mode is enabled and we're in player turn
+      if (!state.settings.learningModeEnabled || state.phase !== GAME_PHASES.PLAYER_TURN) {
+        return state;
+      }
+
+      const currentHand = state.playerHands[state.activeHandIndex];
+      if (!currentHand) {
+        return state;
+      }
+
+      // Determine available actions
+      const canDouble = currentHand.cards.length === INITIAL_HAND_SIZE &&
+        currentHand.bet <= state.balance &&
+        (!currentHand.fromSplit || state.config.doubleAfterSplit);
+
+      const canSplit = isPair(currentHand.cards) &&
+        currentHand.bet <= state.balance &&
+        state.playerHands.filter(h => h.fromSplit).length < state.config.maxSplits &&
+        currentHand.cards.length === INITIAL_HAND_SIZE;
+
+      const canSurrender = state.config.surrenderAllowed &&
+        currentHand.cards.length === INITIAL_HAND_SIZE &&
+        state.playerHands.length === 1;
+
+      // Get strategy recommendation
+      const strategy = getBasicStrategy(
+        currentHand.cards,
+        state.dealerHand,
+        state.config,
+        canDouble,
+        canSplit,
+        canSurrender,
+        currentHand.fromSplit || false
+      );
+
+      return {
+        ...state,
+        learningMode: {
+          ...state.learningMode,
+          currentStrategy: strategy,
+        },
+      };
+    }
+
+    case 'RECORD_DECISION': {
+      // Only record if learning mode is enabled
+      if (!state.settings.learningModeEnabled || !state.learningMode.currentStrategy) {
+        return state;
+      }
+
+      const currentHand = state.playerHands[state.activeHandIndex];
+      const optimalAction = state.learningMode.currentStrategy.primaryAction;
+      const playerAction = action.action;
+      const wasCorrect = playerAction === optimalAction;
+
+      const newLearningMode: LearningModeState = {
+        ...state.learningMode,
+        totalDecisions: state.learningMode.totalDecisions + 1,
+        correctDecisions: wasCorrect ? state.learningMode.correctDecisions + 1 : state.learningMode.correctDecisions,
+        lastDecision: {
+          action: playerAction,
+          wasCorrect,
+          optimalAction,
+        },
+      };
+
+      // Add to mistakes if incorrect
+      if (!wasCorrect) {
+        const dealerCard = state.dealerHand[0];
+        const mistake: MistakeRecord = {
+          handDescription: `${currentHand.cards.map(c => c.rank + c.suit).join(', ')}`,
+          dealerUpCard: `${dealerCard.rank}${dealerCard.suit}`,
+          optimalAction,
+          playerAction,
+          timestamp: Date.now(),
+        };
+        newLearningMode.mistakes = [...state.learningMode.mistakes, mistake];
+      }
+
+      return {
+        ...state,
+        learningMode: newLearningMode,
+      };
+    }
+
+    case 'CLEAR_MISTAKES': {
+      return {
+        ...state,
+        learningMode: {
+          ...state.learningMode,
+          mistakes: [],
+          correctDecisions: 0,
+          totalDecisions: 0,
+          lastDecision: null,
+        },
       };
     }
 

@@ -18,12 +18,16 @@ import TableRules from './components/TableRules';
 import ConfigurationManager from './components/ConfigurationManager';
 import Header from './components/header/Header';
 import GameTable from './components/game/GameTable';
+import StrategyChart from './components/learning/StrategyChart';
+import MistakesViewer from './components/learning/MistakesViewer';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null as unknown as GameState, createInitialState);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tableRulesOpen, setTableRulesOpen] = useState(false);
   const [configManagerOpen, setConfigManagerOpen] = useState(false);
+  const [strategyChartOpen, setStrategyChartOpen] = useState(false);
+  const [mistakesViewerOpen, setMistakesViewerOpen] = useState(false);
 
   // Auto-deal after bet is placed
   useEffect(() => {
@@ -45,27 +49,49 @@ function App() {
     }
   }, [state.phase]);
 
+  // Update strategy hint when game state changes
+  useEffect(() => {
+    if (state.settings.learningModeEnabled && state.phase === GAME_PHASES.PLAYER_TURN) {
+      dispatch({ type: 'UPDATE_STRATEGY_HINT' });
+    }
+  }, [state.phase, state.activeHandIndex, state.playerHands, state.dealerHand, state.settings.learningModeEnabled]);
+
   const handlePlaceBet = (amount: number) => {
     dispatch({ type: 'PLACE_BET', amount });
   };
 
   const handleHit = () => {
+    if (state.settings.learningModeEnabled) {
+      dispatch({ type: 'RECORD_DECISION', action: 'HIT' });
+    }
     dispatch({ type: 'HIT' });
   };
 
   const handleStand = () => {
+    if (state.settings.learningModeEnabled) {
+      dispatch({ type: 'RECORD_DECISION', action: 'STAND' });
+    }
     dispatch({ type: 'STAND' });
   };
 
   const handleDouble = () => {
+    if (state.settings.learningModeEnabled) {
+      dispatch({ type: 'RECORD_DECISION', action: 'DOUBLE' });
+    }
     dispatch({ type: 'DOUBLE' });
   };
 
   const handleSplit = () => {
+    if (state.settings.learningModeEnabled) {
+      dispatch({ type: 'RECORD_DECISION', action: 'SPLIT' });
+    }
     dispatch({ type: 'SPLIT' });
   };
 
   const handleSurrender = () => {
+    if (state.settings.learningModeEnabled) {
+      dispatch({ type: 'RECORD_DECISION', action: 'SURRENDER' });
+    }
     dispatch({ type: 'SURRENDER' });
   };
 
@@ -93,6 +119,15 @@ function App() {
 
   const handleLoadConfig = (config: GameConfig) => {
     dispatch({ type: 'LOAD_CONFIG', config });
+  };
+
+  const handleToggleLearningMode = () => {
+    dispatch({ type: 'TOGGLE_LEARNING_MODE' });
+  };
+
+  const handleClearMistakes = () => {
+    dispatch({ type: 'CLEAR_MISTAKES' });
+    setMistakesViewerOpen(false);
   };
 
   // Determine which actions are available
@@ -128,6 +163,10 @@ function App() {
         onOpenConfigurations={() => setConfigManagerOpen(true)}
         onOpenTableRules={() => setTableRulesOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
+        learningModeEnabled={state.settings.learningModeEnabled}
+        onToggleLearningMode={handleToggleLearningMode}
+        onOpenStrategyChart={() => setStrategyChartOpen(true)}
+        onOpenMistakes={() => setMistakesViewerOpen(true)}
       />
 
       <GameTable
@@ -147,6 +186,8 @@ function App() {
         onSplit={handleSplit}
         onSurrender={handleSurrender}
         onInsurance={handleInsurance}
+        learningMode={state.learningMode}
+        learningModeEnabled={state.settings.learningModeEnabled}
       />
 
       {/* Betting Modal */}
@@ -211,6 +252,20 @@ function App() {
         onUpdateConfig={handleUpdateConfig}
         isOpen={tableRulesOpen}
         onClose={() => setTableRulesOpen(false)}
+      />
+
+      {/* Strategy Chart Modal */}
+      <StrategyChart
+        isOpen={strategyChartOpen}
+        onClose={() => setStrategyChartOpen(false)}
+      />
+
+      {/* Mistakes Viewer Modal */}
+      <MistakesViewer
+        mistakes={state.learningMode.mistakes}
+        isOpen={mistakesViewerOpen}
+        onClose={() => setMistakesViewerOpen(false)}
+        onClear={handleClearMistakes}
       />
     </div>
   );

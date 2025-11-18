@@ -7,6 +7,10 @@ interface HeaderProps {
   onOpenConfigurations: () => void;
   onOpenTableRules: () => void;
   onOpenSettings: () => void;
+  learningModeEnabled?: boolean;
+  onToggleLearningMode?: () => void;
+  onOpenStrategyChart?: () => void;
+  onOpenMistakes?: () => void;
 }
 
 export default function Header({
@@ -14,7 +18,11 @@ export default function Header({
   onResetBalance,
   onOpenConfigurations,
   onOpenTableRules,
-  onOpenSettings
+  onOpenSettings,
+  learningModeEnabled,
+  onToggleLearningMode,
+  onOpenStrategyChart,
+  onOpenMistakes
 }: HeaderProps) {
   return (
     <div className="bg-gray-900 text-white p-4 shadow-lg">
@@ -26,6 +34,10 @@ export default function Header({
             onOpenConfigurations={onOpenConfigurations}
             onOpenTableRules={onOpenTableRules}
             onOpenSettings={onOpenSettings}
+            learningModeEnabled={learningModeEnabled}
+            onToggleLearningMode={onToggleLearningMode}
+            onOpenStrategyChart={onOpenStrategyChart}
+            onOpenMistakes={onOpenMistakes}
           />
         </div>
       </div>
