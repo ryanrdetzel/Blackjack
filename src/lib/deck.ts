@@ -1,4 +1,13 @@
 import { RANKS, SUITS, Card } from './types';
+import {
+  ACE_HIGH_VALUE,
+  FACE_CARD_VALUE,
+  ACE_VALUE_ADJUSTMENT,
+  BLACKJACK_VALUE,
+  INITIAL_HAND_SIZE,
+  FIRST_INDEX,
+  ZERO,
+} from './constants';
 
 /**
  * Create a single 52-card deck
@@ -40,11 +49,11 @@ export function shuffleDeck(deck: Card[]): Card[] {
  * Draw a card from the shoe
  */
 export function drawCard(shoe: Card[]): { card: Card; remainingShoe: Card[] } {
-  if (shoe.length === 0) {
+  if (shoe.length === ZERO) {
     throw new Error('Shoe is empty');
   }
   return {
-    card: shoe[0],
+    card: shoe[FIRST_INDEX],
     remainingShoe: shoe.slice(1),
   };
 }
@@ -55,10 +64,10 @@ export function drawCard(shoe: Card[]): { card: Card; remainingShoe: Card[] } {
  */
 export function getCardValue(card: Card): number {
   if (card.rank === 'A') {
-    return 11; // Default to 11, will adjust for soft hands
+    return ACE_HIGH_VALUE; // Default to 11, will adjust for soft hands
   }
   if (['J', 'Q', 'K'].includes(card.rank)) {
-    return 10;
+    return FACE_CARD_VALUE;
   }
   return parseInt(card.rank);
 }
@@ -80,13 +89,13 @@ export function calculateHandValue(cards: Card[]): { value: number; isSoft: bool
   }
 
   // Adjust for aces (convert from 11 to 1 if busting)
-  while (value > 21 && aces > 0) {
-    value -= 10; // Convert an ace from 11 to 1
+  while (value > BLACKJACK_VALUE && aces > ZERO) {
+    value -= ACE_VALUE_ADJUSTMENT; // Convert an ace from 11 to 1
     aces--;
   }
 
   // Hand is soft if it contains an ace counted as 11
-  const isSoft = aces > 0 && value <= 21;
+  const isSoft = aces > ZERO && value <= BLACKJACK_VALUE;
 
   return { value, isSoft };
 }
@@ -95,9 +104,9 @@ export function calculateHandValue(cards: Card[]): { value: number; isSoft: bool
  * Check if a hand is blackjack (21 with 2 cards)
  */
 export function isBlackjack(cards: Card[]): boolean {
-  if (cards.length !== 2) return false;
+  if (cards.length !== INITIAL_HAND_SIZE) return false;
   const { value } = calculateHandValue(cards);
-  return value === 21;
+  return value === BLACKJACK_VALUE;
 }
 
 /**
@@ -105,17 +114,17 @@ export function isBlackjack(cards: Card[]): boolean {
  */
 export function isBust(cards: Card[]): boolean {
   const { value } = calculateHandValue(cards);
-  return value > 21;
+  return value > BLACKJACK_VALUE;
 }
 
 /**
  * Check if a hand is a pair (can be split)
  */
 export function isPair(cards: Card[]): boolean {
-  if (cards.length !== 2) return false;
+  if (cards.length !== INITIAL_HAND_SIZE) return false;
 
   // Both cards must have same rank
-  return cards[0].rank === cards[1].rank;
+  return cards[FIRST_INDEX].rank === cards[1].rank;
 }
 
 /**
@@ -123,9 +132,9 @@ export function isPair(cards: Card[]): boolean {
  * Some casinos allow splitting any 10-value cards (10, J, Q, K)
  */
 export function isSameValue(cards: Card[]): boolean {
-  if (cards.length !== 2) return false;
+  if (cards.length !== INITIAL_HAND_SIZE) return false;
 
-  const value1 = getCardValue(cards[0]);
+  const value1 = getCardValue(cards[FIRST_INDEX]);
   const value2 = getCardValue(cards[1]);
 
   return value1 === value2;

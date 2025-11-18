@@ -1,5 +1,10 @@
 import { calculateHandValue, isBlackjack, isBust } from './deck';
 import { GAME_RESULT, Card, GameResult } from './types';
+import {
+  DEALER_STAND_THRESHOLD,
+  REGULAR_WIN_MULTIPLIER,
+  ZERO,
+} from './constants';
 
 /**
  * Determine if dealer should hit
@@ -7,8 +12,8 @@ import { GAME_RESULT, Card, GameResult } from './types';
 export function dealerShouldHit(dealerCards: Card[], hitSoft17: boolean = false): boolean {
   const { value, isSoft } = calculateHandValue(dealerCards);
 
-  if (value < 17) return true;
-  if (value > 17) return false;
+  if (value < DEALER_STAND_THRESHOLD) return true;
+  if (value > DEALER_STAND_THRESHOLD) return false;
 
   // Value is exactly 17
   if (hitSoft17 && isSoft) return true;
@@ -73,16 +78,16 @@ export function calculatePayout(bet: number, result: GameResult, blackjackPayout
       return bet + (bet * blackjackPayout[0]) / blackjackPayout[1];
     case GAME_RESULT.WIN:
       // Regular win pays 1:1
-      return bet * 2;
+      return bet * REGULAR_WIN_MULTIPLIER;
     case GAME_RESULT.PUSH:
       // Push returns original bet
       return bet;
     case GAME_RESULT.DEALER_BLACKJACK:
     case GAME_RESULT.LOSE:
       // Loss returns nothing
-      return 0;
+      return ZERO;
     default:
-      return 0;
+      return ZERO;
   }
 }
 

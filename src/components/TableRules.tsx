@@ -1,4 +1,21 @@
 import { GameConfig } from '../lib/types';
+import {
+  MIN_DECK_COUNT,
+  MAX_DECK_COUNT,
+  MIN_SPLITS,
+  MAX_SPLITS,
+  MIN_BET_VALUE,
+  DEFAULT_DECK_COUNT,
+  DEFAULT_BLACKJACK_PAYOUT,
+  BLACKJACK_PAYOUT_6_5,
+  BLACKJACK_PAYOUT_2_1,
+  DEFAULT_MIN_BET,
+  DEFAULT_MAX_BET,
+  DEFAULT_STARTING_BALANCE,
+  DEFAULT_MAX_SPLITS,
+  FIRST_INDEX,
+  SECOND_INDEX,
+} from '../lib/constants';
 
 interface TableRulesProps {
   config: GameConfig;
@@ -55,8 +72,8 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
               </div>
               <input
                 type="number"
-                min="1"
-                max="8"
+                min={MIN_DECK_COUNT}
+                max={MAX_DECK_COUNT}
                 value={config.deckCount}
                 onChange={(e) => handleNumberChange('deckCount', e.target.value)}
                 className="w-20 px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
@@ -103,9 +120,9 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={() => handlePayoutChange(3, 2)}
+                  onClick={() => handlePayoutChange(DEFAULT_BLACKJACK_PAYOUT[FIRST_INDEX], DEFAULT_BLACKJACK_PAYOUT[SECOND_INDEX])}
                   className={`flex-1 px-4 py-2 rounded font-semibold transition-colors ${
-                    config.blackjackPayout[0] === 3 && config.blackjackPayout[1] === 2
+                    config.blackjackPayout[FIRST_INDEX] === DEFAULT_BLACKJACK_PAYOUT[FIRST_INDEX] && config.blackjackPayout[SECOND_INDEX] === DEFAULT_BLACKJACK_PAYOUT[SECOND_INDEX]
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
@@ -113,9 +130,9 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
                   3:2 (Standard)
                 </button>
                 <button
-                  onClick={() => handlePayoutChange(6, 5)}
+                  onClick={() => handlePayoutChange(BLACKJACK_PAYOUT_6_5[FIRST_INDEX], BLACKJACK_PAYOUT_6_5[SECOND_INDEX])}
                   className={`flex-1 px-4 py-2 rounded font-semibold transition-colors ${
-                    config.blackjackPayout[0] === 6 && config.blackjackPayout[1] === 5
+                    config.blackjackPayout[FIRST_INDEX] === BLACKJACK_PAYOUT_6_5[FIRST_INDEX] && config.blackjackPayout[SECOND_INDEX] === BLACKJACK_PAYOUT_6_5[SECOND_INDEX]
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
@@ -123,9 +140,9 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
                   6:5 (Lower)
                 </button>
                 <button
-                  onClick={() => handlePayoutChange(2, 1)}
+                  onClick={() => handlePayoutChange(BLACKJACK_PAYOUT_2_1[FIRST_INDEX], BLACKJACK_PAYOUT_2_1[SECOND_INDEX])}
                   className={`flex-1 px-4 py-2 rounded font-semibold transition-colors ${
-                    config.blackjackPayout[0] === 2 && config.blackjackPayout[1] === 1
+                    config.blackjackPayout[FIRST_INDEX] === BLACKJACK_PAYOUT_2_1[FIRST_INDEX] && config.blackjackPayout[SECOND_INDEX] === BLACKJACK_PAYOUT_2_1[SECOND_INDEX]
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
@@ -150,7 +167,7 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
                   <span className="absolute left-3 top-2 text-gray-400">$</span>
                   <input
                     type="number"
-                    min="1"
+                    min={MIN_BET_VALUE}
                     value={config.minBet}
                     onChange={(e) => handleNumberChange('minBet', e.target.value)}
                     className="w-full pl-7 pr-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
@@ -165,7 +182,7 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
                   <span className="absolute left-3 top-2 text-gray-400">$</span>
                   <input
                     type="number"
-                    min="1"
+                    min={MIN_BET_VALUE}
                     value={config.maxBet}
                     onChange={(e) => handleNumberChange('maxBet', e.target.value)}
                     className="w-full pl-7 pr-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
@@ -180,7 +197,7 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
                   <span className="absolute left-3 top-2 text-gray-400">$</span>
                   <input
                     type="number"
-                    min="1"
+                    min={MIN_BET_VALUE}
                     value={config.startingBalance}
                     onChange={(e) => handleNumberChange('startingBalance', e.target.value)}
                     className="w-full pl-7 pr-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
@@ -246,8 +263,8 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
               </div>
               <input
                 type="number"
-                min="1"
-                max="4"
+                min={MIN_SPLITS}
+                max={MAX_SPLITS}
                 value={config.maxSplits}
                 onChange={(e) => handleNumberChange('maxSplits', e.target.value)}
                 className="w-20 px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
@@ -310,15 +327,15 @@ export default function TableRules({ config, onUpdateConfig, isOpen, onClose }: 
             onClick={() => {
               // Reset to defaults
               onUpdateConfig({
-                deckCount: 6,
+                deckCount: DEFAULT_DECK_COUNT,
                 dealerHitsSoft17: false,
-                blackjackPayout: [3, 2],
-                minBet: 5,
-                maxBet: 500,
-                startingBalance: 1000,
+                blackjackPayout: DEFAULT_BLACKJACK_PAYOUT,
+                minBet: DEFAULT_MIN_BET,
+                maxBet: DEFAULT_MAX_BET,
+                startingBalance: DEFAULT_STARTING_BALANCE,
                 doubleAfterSplit: true,
                 resplitAcesAllowed: false,
-                maxSplits: 3,
+                maxSplits: DEFAULT_MAX_SPLITS,
                 surrenderAllowed: true,
                 insuranceAllowed: true,
               });
