@@ -4,9 +4,10 @@ import Hand from '../Hand';
 interface DealerAreaProps {
   cards: Card[];
   hideFirstCard: boolean;
+  showHandTotal?: boolean;
 }
 
-export default function DealerArea({ cards, hideFirstCard }: DealerAreaProps) {
+export default function DealerArea({ cards, hideFirstCard, showHandTotal = true }: DealerAreaProps) {
   return (
     <div className="bg-green-900/30 rounded-2xl p-3 mb-3 border border-green-600/30">
       <div className="text-center mb-2">
@@ -18,7 +19,7 @@ export default function DealerArea({ cards, hideFirstCard }: DealerAreaProps) {
             cards={cards}
             label=""
             hideFirstCard={hideFirstCard}
-            showValue={true}
+            showValue={showHandTotal}
           />
         ) : (
           <div className="text-green-600/50 text-lg">Dealer's cards will appear here</div>

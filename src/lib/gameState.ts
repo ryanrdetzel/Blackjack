@@ -49,6 +49,7 @@ interface GameSettings {
   showExpectedValue: boolean;
   soundEnabled?: boolean;
   animationsEnabled?: boolean;
+  showHandTotal?: boolean;
 }
 
 // Learning mode mistake tracking
@@ -202,6 +203,7 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
     showExpectedValue: false,
     soundEnabled: true,
     animationsEnabled: true,
+    showHandTotal: true,
   };
   const settings: GameSettings = savedSettings ? { ...defaultSettings, ...JSON.parse(savedSettings) } : defaultSettings;
 
