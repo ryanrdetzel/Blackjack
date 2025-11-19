@@ -11,6 +11,8 @@ interface HeaderProps {
   onToggleLearningMode?: () => void;
   onOpenStrategyChart?: () => void;
   onOpenMistakes?: () => void;
+  onOpenSpeedTraining?: () => void;
+  speedTrainingActive?: boolean;
 }
 
 export default function Header({
@@ -22,7 +24,9 @@ export default function Header({
   learningModeEnabled,
   onToggleLearningMode,
   onOpenStrategyChart,
-  onOpenMistakes
+  onOpenMistakes,
+  onOpenSpeedTraining,
+  speedTrainingActive
 }: HeaderProps) {
   return (
     <div className="bg-gray-900 text-white p-4 shadow-lg">
@@ -38,6 +42,8 @@ export default function Header({
             onToggleLearningMode={onToggleLearningMode}
             onOpenStrategyChart={onOpenStrategyChart}
             onOpenMistakes={onOpenMistakes}
+            onOpenSpeedTraining={onOpenSpeedTraining}
+            speedTrainingActive={speedTrainingActive}
           />
         </div>
       </div>
