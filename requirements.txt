@@ -1,0 +1,5 @@
+# Blackjack CLI Game - Python Dependencies
+# This project uses only Python standard library
+# No external dependencies required
+
+# Minimum Python version: 3.7
