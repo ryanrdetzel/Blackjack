@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { Modal, Button, ToggleSwitch } from './ui';
+import { soundManager } from '../lib/sounds';
 
 interface GameSettings {
   autoDeal: boolean;
   lastBetAmount: number;
+  soundEnabled?: boolean;
 }
 
 interface SettingsProps {
@@ -13,9 +16,21 @@ interface SettingsProps {
 }
 
 export default function Settings({ settings, onUpdateSettings, isOpen, onClose }: SettingsProps) {
+  // Sync soundManager with settings on mount and when settings change
+  useEffect(() => {
+    const soundEnabled = settings.soundEnabled ?? true;
+    soundManager.setEnabled(soundEnabled);
+  }, [settings.soundEnabled]);
+
   const handleToggle = (key: keyof GameSettings) => {
     if (typeof settings[key] === 'boolean') {
-      onUpdateSettings({ [key]: !settings[key] });
+      const newValue = !settings[key];
+      onUpdateSettings({ [key]: newValue });
+
+      // Update soundManager immediately when sound setting changes
+      if (key === 'soundEnabled') {
+        soundManager.setEnabled(newValue);
+      }
     }
   };
 
@@ -42,6 +57,19 @@ export default function Settings({ settings, onUpdateSettings, isOpen, onClose }
           <ToggleSwitch
             enabled={settings.autoDeal}
             onChange={() => handleToggle('autoDeal')}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-white font-semibold">Sound Effects</div>
+            <div className="text-gray-400 text-sm">
+              Play sound effects for card dealing, betting, and game results
+            </div>
+          </div>
+          <ToggleSwitch
+            enabled={settings.soundEnabled ?? true}
+            onChange={() => handleToggle('soundEnabled')}
           />
         </div>
       </div>
