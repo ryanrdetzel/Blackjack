@@ -7,11 +7,15 @@ interface BettingControlsProps {
   maxBet: number;
   onPlaceBet: (amount: number) => void;
   lastBetAmount?: number;
+  onResetBalance?: () => void;
 }
 
-export default function BettingControls({ balance, minBet, maxBet, onPlaceBet, lastBetAmount }: BettingControlsProps) {
+export default function BettingControls({ balance, minBet, maxBet, onPlaceBet, lastBetAmount, onResetBalance }: BettingControlsProps) {
   const [showFullControls, setShowFullControls] = useState(false);
   const [betAmount, setBetAmount] = useState(lastBetAmount || minBet);
+
+  // Check if player can afford any bet
+  const canAffordMinBet = balance >= minBet;
 
   const quickBets = QUICK_BET_AMOUNTS;
 
@@ -33,6 +37,38 @@ export default function BettingControls({ balance, minBet, maxBet, onPlaceBet, l
       setBetAmount(amount);
     }
   };
+
+  // If player can't afford minimum bet, show reset option
+  if (!canAffordMinBet) {
+    return (
+      <div className="bg-gray-800 rounded-lg p-6 space-y-4 text-center">
+        <h3 className="text-white text-xl font-bold">Out of Chips!</h3>
+
+        <div className="text-red-400 text-sm">
+          Your balance (${balance.toFixed(2)}) is below the minimum bet (${minBet})
+        </div>
+
+        <p className="text-gray-300 text-sm">
+          You need at least ${minBet} to continue playing.
+        </p>
+
+        {onResetBalance && (
+          <button
+            onClick={onResetBalance}
+            className="btn-primary w-full text-lg"
+          >
+            Reset Balance
+          </button>
+        )}
+
+        {!onResetBalance && (
+          <div className="text-gray-400 text-sm">
+            Please reset your balance from the menu to continue.
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // If showing full controls or no last bet, show full interface
   if (showFullControls || !lastBetAmount) {
