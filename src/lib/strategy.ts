@@ -30,6 +30,7 @@ export interface StrategyDecision {
   primaryAction: StrategyAction;
   recommendations: ActionRecommendation[];
   explanation: string;
+  reasoning: string; // Detailed explanation of WHY this is the optimal play
 }
 
 /**
@@ -103,6 +104,108 @@ const pairsStrategy: Record<string, Record<number, StrategyAction>> = {
   'Q': { 2: 'STAND', 3: 'STAND', 4: 'STAND', 5: 'STAND', 6: 'STAND', 7: 'STAND', 8: 'STAND', 9: 'STAND', 10: 'STAND', 11: 'STAND' },
   'K': { 2: 'STAND', 3: 'STAND', 4: 'STAND', 5: 'STAND', 6: 'STAND', 7: 'STAND', 8: 'STAND', 9: 'STAND', 10: 'STAND', 11: 'STAND' },
 };
+
+/**
+ * Generate detailed reasoning for why an action is optimal
+ */
+function generateReasoning(
+  action: StrategyAction,
+  playerValue: number,
+  dealerUpCard: number,
+  isSoft: boolean,
+  isPairHand: boolean,
+  pairRank?: string
+): string {
+  // Dealer card strength context
+  const dealerStrength = dealerUpCard >= 7 ? 'strong' : dealerUpCard >= 4 ? 'weak' : 'moderate';
+  const dealerBustChance = dealerUpCard <= 6 ? 'high' : 'low';
+
+  switch (action) {
+    case 'HIT':
+      if (playerValue <= 11) {
+        return `You can't bust with ${playerValue}, so hitting is risk-free. You need a stronger hand to compete.`;
+      } else if (playerValue === 12) {
+        if (dealerUpCard >= 4 && dealerUpCard <= 6) {
+          return `With 12, you'd normally stand against the dealer's weak ${dealerUpCard}. However, 12 is still vulnerable, and the dealer has a high bust chance.`;
+        }
+        return `With 12 against the dealer's ${dealerStrength} card, you need to improve. Only a 10-value card will bust you (31% chance).`;
+      } else if (playerValue >= 13 && playerValue <= 16) {
+        if (dealerUpCard <= 6) {
+          return `Against the dealer's weak ${dealerUpCard} (${dealerBustChance} bust chance), standing is better. Let the dealer bust while you avoid risk.`;
+        }
+        return `Your ${playerValue} is weak against the dealer's ${dealerStrength} ${dealerUpCard}. You're likely losing if you stand, so hitting gives you the best chance despite bust risk.`;
+      } else if (isSoft) {
+        return `With a soft ${playerValue}, you can hit safely because the ace can be counted as 1 if you'd bust. Try to improve your hand without risk.`;
+      }
+      return `Your hand needs improvement against the dealer's ${dealerUpCard}. Hitting gives you the best mathematical chance of winning.`;
+
+    case 'STAND':
+      if (playerValue >= 17 && !isSoft) {
+        return `Hard ${playerValue} is strong enough to beat most dealer outcomes. The risk of busting (${Math.round((playerValue - 16) * 7.7)}% chance) outweighs the potential gain.`;
+      } else if (playerValue >= 19 && isSoft) {
+        return `Soft ${playerValue} is a strong hand. Standing preserves your excellent position without unnecessary risk.`;
+      } else if (playerValue >= 13 && playerValue <= 16 && dealerUpCard <= 6) {
+        return `The dealer shows a weak ${dealerUpCard} with a ${dealerBustChance} bust probability. Let them take the risk while you protect your hand.`;
+      } else if (isPairHand && pairRank && ['10', 'J', 'Q', 'K'].includes(pairRank)) {
+        return `You have 20, one of the strongest hands in blackjack. Never break up this winning hand.`;
+      }
+      return `Standing gives you the best chance of winning in this situation. Your hand is strong enough against the dealer's ${dealerUpCard}.`;
+
+    case 'DOUBLE':
+    case 'DOUBLE_OR_HIT':
+    case 'DOUBLE_OR_STAND':
+      if (playerValue === 11) {
+        return `11 is the best doubling hand! You have a 31% chance of getting 21, and you can't bust on the next card. Maximize your profit on this favorable situation.`;
+      } else if (playerValue === 10) {
+        if (dealerUpCard <= 9) {
+          return `With 10, you have excellent odds (31% chance) of making 20. The dealer's ${dealerUpCard} is weak enough that doubling maximizes your edge.`;
+        }
+        return `With 10 against the dealer's strong ${dealerUpCard}, doubling is risky. You have good odds of making 20, but the dealer is also strong.`;
+      } else if (playerValue === 9) {
+        return `Against the dealer's weak ${dealerUpCard}, your 9 has good potential. Doubling lets you capitalize on the dealer's disadvantage.`;
+      } else if (isSoft && playerValue >= 13 && playerValue <= 18) {
+        return `Soft hands against weak dealers are excellent doubling opportunities. You can't bust, and the dealer is likely to bust. Double to maximize profit!`;
+      }
+      return `This situation favors you mathematically. Doubling your bet maximizes expected value when you have the advantage.`;
+
+    case 'SPLIT':
+    case 'SPLIT_IF_DAS':
+      if (pairRank === 'A') {
+        return `Always split aces! Starting two hands with 11 each gives you excellent chances of making strong hands or blackjacks (though split blackjacks usually pay even money).`;
+      } else if (pairRank === '8') {
+        return `Always split 8s. A hand of 16 is terrible, but two hands starting with 8 each have much better prospects. This is one of the most important splits in blackjack.`;
+      } else if (pairRank === '9') {
+        if (dealerUpCard === 7 || dealerUpCard >= 10) {
+          return `With pair of 9s (18 total), standing is better here. Against ${dealerUpCard}, 18 is competitive, and splitting doesn't offer enough advantage.`;
+        }
+        return `Split 9s against the dealer's ${dealerStrength} card. Two hands of 9 have better expected value than one hand of 18 in this situation.`;
+      } else if (['2', '3', '6', '7'].includes(pairRank || '')) {
+        if (dealerUpCard <= 7) {
+          return `Split low pairs against the dealer's weak card. You're creating two hands with potential, exploiting the dealer's disadvantage.`;
+        }
+        return `Against the dealer's strong card, splitting these low pairs turns one bad hand into two. Hit instead to minimize losses.`;
+      } else if (pairRank === '4') {
+        return `Never split 4s unless you can double after split. Starting with 8 is better than two weak hands of 4.`;
+      } else if (pairRank === '5') {
+        return `Never split 5s! You have 10, which is a strong doubling hand. Splitting would give you two terrible starting hands of 5.`;
+      }
+      return `Splitting gives you better mathematical expectation than playing this pair as a single hand.`;
+
+    case 'SURRENDER':
+    case 'SURRENDER_OR_HIT':
+    case 'SURRENDER_OR_STAND':
+    case 'SURRENDER_OR_SPLIT':
+      if (playerValue === 16 && dealerUpCard >= 9) {
+        return `Hard 16 vs dealer ${dealerUpCard} is one of the worst situations in blackjack. You'll lose over 50% of the time either way, so surrendering minimizes your losses to 50% of your bet.`;
+      } else if (playerValue === 15 && dealerUpCard >= 10) {
+        return `Hard 15 vs dealer 10 or Ace is extremely unfavorable. Surrendering recovers half your bet, which is better than the expected loss from playing out this hand.`;
+      }
+      return `This is a very unfavorable situation. Surrendering lets you save half your bet instead of likely losing the entire amount.`;
+
+    default:
+      return `This is the mathematically optimal play based on basic strategy for this situation.`;
+  }
+}
 
 /**
  * Resolve conditional strategy actions based on game config
@@ -206,10 +309,21 @@ export function getBasicStrategy(
     canSurrender
   );
 
+  // Generate detailed reasoning for the optimal action
+  const reasoning = generateReasoning(
+    resolvedAction,
+    playerValue,
+    dealerUpCard,
+    isSoft,
+    isPairHand,
+    isPairHand ? playerCards[0].rank : undefined
+  );
+
   return {
     primaryAction: resolvedAction,
     recommendations,
     explanation,
+    reasoning,
   };
 }
 
