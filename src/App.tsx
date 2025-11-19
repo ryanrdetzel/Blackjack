@@ -24,6 +24,7 @@ import { SpeedTrainingControls } from './components/speedtraining/SpeedTrainingC
 import { SpeedTrainingStats } from './components/speedtraining/SpeedTrainingStats';
 import { DecisionTimer } from './components/speedtraining/DecisionTimer';
 import { SessionSummary } from './components/speedtraining/SessionSummary';
+import { StatisticsModal } from './components/statistics/StatisticsModal';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null as unknown as GameState, createInitialState);
@@ -34,6 +35,7 @@ function App() {
   const [mistakesViewerOpen, setMistakesViewerOpen] = useState(false);
   const [speedTrainingOpen, setSpeedTrainingOpen] = useState(false);
   const [sessionSummaryOpen, setSessionSummaryOpen] = useState(false);
+  const [statisticsOpen, setStatisticsOpen] = useState(false);
   const [lastCompletedSession, setLastCompletedSession] = useState<typeof state.speedTraining.currentSession | null>(null);
 
   // Auto-deal after bet is placed
@@ -185,6 +187,15 @@ function App() {
     dispatch({ type: 'STAND' });
   };
 
+  // Statistics handlers
+  const handleResetSessionStats = () => {
+    dispatch({ type: 'RESET_SESSION_STATS' });
+  };
+
+  const handleClearAllStats = () => {
+    dispatch({ type: 'CLEAR_ALL_STATS' });
+  };
+
   // Determine which actions are available
   const currentHand = state.playerHands[state.activeHandIndex];
   const canDouble = currentHand &&
@@ -218,6 +229,7 @@ function App() {
         onOpenConfigurations={() => setConfigManagerOpen(true)}
         onOpenTableRules={() => setTableRulesOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
+        onOpenStatistics={() => setStatisticsOpen(true)}
         learningModeEnabled={state.settings.learningModeEnabled}
         onToggleLearningMode={handleToggleLearningMode}
         onOpenStrategyChart={() => setStrategyChartOpen(true)}
@@ -397,6 +409,17 @@ function App() {
             setLastCompletedSession(null);
             setSpeedTrainingOpen(true);
           }}
+        />
+      )}
+
+      {/* Statistics Modal */}
+      {statisticsOpen && (
+        <StatisticsModal
+          statistics={state.statistics}
+          currentBalance={state.balance}
+          onClose={() => setStatisticsOpen(false)}
+          onResetSession={handleResetSessionStats}
+          onClearAll={handleClearAllStats}
         />
       )}
     </div>

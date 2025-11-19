@@ -7,6 +7,7 @@ interface HeaderProps {
   onOpenConfigurations: () => void;
   onOpenTableRules: () => void;
   onOpenSettings: () => void;
+  onOpenStatistics?: () => void;
   learningModeEnabled?: boolean;
   onToggleLearningMode?: () => void;
   onOpenStrategyChart?: () => void;
@@ -21,6 +22,7 @@ export default function Header({
   onOpenConfigurations,
   onOpenTableRules,
   onOpenSettings,
+  onOpenStatistics,
   learningModeEnabled,
   onToggleLearningMode,
   onOpenStrategyChart,
@@ -38,6 +40,7 @@ export default function Header({
             onOpenConfigurations={onOpenConfigurations}
             onOpenTableRules={onOpenTableRules}
             onOpenSettings={onOpenSettings}
+            onOpenStatistics={onOpenStatistics}
             learningModeEnabled={learningModeEnabled}
             onToggleLearningMode={onToggleLearningMode}
             onOpenStrategyChart={onOpenStrategyChart}
