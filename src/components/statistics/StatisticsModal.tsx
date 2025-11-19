@@ -8,6 +8,7 @@ import { StatisticsState, exportStatisticsJSON, exportHandHistoryCSV, exportSess
 import { StatisticsDashboard } from './StatisticsDashboard';
 import { HandHistoryViewer } from './HandHistoryViewer';
 import { BankrollChart } from './BankrollChart';
+import { Modal, Button, Tabs, type Tab } from '../ui';
 
 interface StatisticsModalProps {
   statistics: StatisticsState;
@@ -17,7 +18,7 @@ interface StatisticsModalProps {
   onClearAll: () => void;
 }
 
-type Tab = 'dashboard' | 'history' | 'chart' | 'export';
+type TabId = 'dashboard' | 'history' | 'chart' | 'export';
 
 export function StatisticsModal({
   statistics,
@@ -26,58 +27,23 @@ export function StatisticsModal({
   onResetSession,
   onClearAll,
 }: StatisticsModalProps) {
-  const [activeTab, setActiveTab] = React.useState<Tab>('dashboard');
+  const [activeTab, setActiveTab] = React.useState<TabId>('dashboard');
+
+  const tabs: Tab[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'history', label: 'Hand History', icon: '📜' },
+    { id: 'chart', label: 'Bankroll Chart', icon: '📈' },
+    { id: 'export', label: 'Export', icon: '💾' },
+  ];
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-gray-900 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-700"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-white">Game Statistics</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white text-3xl leading-none transition-colors"
-          >
-            ×
-          </button>
-        </div>
-
+    <Modal isOpen={true} onClose={onClose} title="Game Statistics" size="large">
+      <div className="space-y-6">
         {/* Tabs */}
-        <div className="flex border-b border-gray-700 bg-gray-850">
-          <TabButton
-            active={activeTab === 'dashboard'}
-            onClick={() => setActiveTab('dashboard')}
-            icon="📊"
-            label="Dashboard"
-          />
-          <TabButton
-            active={activeTab === 'history'}
-            onClick={() => setActiveTab('history')}
-            icon="📜"
-            label="Hand History"
-          />
-          <TabButton
-            active={activeTab === 'chart'}
-            onClick={() => setActiveTab('chart')}
-            icon="📈"
-            label="Bankroll Chart"
-          />
-          <TabButton
-            active={activeTab === 'export'}
-            onClick={() => setActiveTab('export')}
-            icon="💾"
-            label="Export"
-          />
-        </div>
+        <Tabs tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabId)} />
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-[400px]">
           {activeTab === 'dashboard' && (
             <StatisticsDashboard
               session={statistics.session}
@@ -102,41 +68,15 @@ export function StatisticsModal({
             <ExportPanel statistics={statistics} />
           )}
         </div>
-
-        {/* Footer */}
-        <div className="flex justify-end p-4 border-t border-gray-700 bg-gray-850">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-          >
-            Close
-          </button>
-        </div>
       </div>
-    </div>
-  );
-}
 
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  icon: string;
-  label: string;
-}
-
-function TabButton({ active, onClick, icon, label }: TabButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-6 py-3 flex items-center gap-2 transition-colors border-b-2 ${
-        active
-          ? 'border-blue-500 text-white bg-gray-800'
-          : 'border-transparent text-gray-400 hover:text-white hover:bg-gray-800'
-      }`}
-    >
-      <span>{icon}</span>
-      <span className="font-medium">{label}</span>
-    </button>
+      {/* Footer */}
+      <div className="mt-6 flex justify-end">
+        <Button onClick={onClose} variant="primary">
+          Close
+        </Button>
+      </div>
+    </Modal>
   );
 }
 
@@ -144,7 +84,7 @@ interface ExportPanelProps {
   statistics: StatisticsState;
 }
 
-function ExportPanel({ statistics }: ExportPanelProps) {
+const ExportPanel = React.memo(({ statistics }: ExportPanelProps) => {
   const downloadFile = (content: string, filename: string, type: string) => {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
@@ -175,6 +115,33 @@ function ExportPanel({ statistics }: ExportPanelProps) {
     downloadFile(csv, `blackjack-session-stats-${timestamp}.csv`, 'text/csv');
   };
 
+  const exportOptions = [
+    {
+      icon: '📦',
+      title: 'Complete Statistics',
+      description: 'Export all statistics, hand history, and bankroll data as JSON. Includes session stats, all-time stats, and complete hand records.',
+      buttonLabel: 'Export JSON',
+      variant: 'primary' as const,
+      onClick: handleExportJSON,
+    },
+    {
+      icon: '📊',
+      title: 'Hand History',
+      description: 'Export detailed hand history as CSV. Perfect for analyzing your gameplay in spreadsheet software like Excel or Google Sheets.',
+      buttonLabel: 'Export CSV',
+      variant: 'success' as const,
+      onClick: handleExportHandHistoryCSV,
+    },
+    {
+      icon: '📈',
+      title: 'Session Statistics',
+      description: 'Export current session statistics as CSV. Includes all session metrics, streaks, and performance data.',
+      buttonLabel: 'Export CSV',
+      variant: 'secondary' as const,
+      onClick: handleExportSessionCSV,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -185,65 +152,21 @@ function ExportPanel({ statistics }: ExportPanelProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Complete Statistics (JSON) */}
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <div className="flex items-start gap-3 mb-4">
-            <span className="text-3xl">📦</span>
-            <div className="flex-1">
-              <h4 className="text-lg font-semibold text-white mb-2">Complete Statistics</h4>
-              <p className="text-sm text-gray-400 mb-4">
-                Export all statistics, hand history, and bankroll data as JSON. Includes session stats,
-                all-time stats, and complete hand records.
-              </p>
-              <button
-                onClick={handleExportJSON}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors w-full"
-              >
-                Export JSON
-              </button>
+        {/* Export Options */}
+        {exportOptions.map((option) => (
+          <div key={option.title} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-3xl">{option.icon}</span>
+              <div className="flex-1">
+                <h4 className="text-lg font-semibold text-white mb-2">{option.title}</h4>
+                <p className="text-sm text-gray-400 mb-4">{option.description}</p>
+                <Button onClick={option.onClick} variant={option.variant} fullWidth>
+                  {option.buttonLabel}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Hand History (CSV) */}
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <div className="flex items-start gap-3 mb-4">
-            <span className="text-3xl">📊</span>
-            <div className="flex-1">
-              <h4 className="text-lg font-semibold text-white mb-2">Hand History</h4>
-              <p className="text-sm text-gray-400 mb-4">
-                Export detailed hand history as CSV. Perfect for analyzing your gameplay in spreadsheet
-                software like Excel or Google Sheets.
-              </p>
-              <button
-                onClick={handleExportHandHistoryCSV}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors w-full"
-              >
-                Export CSV
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Session Statistics (CSV) */}
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <div className="flex items-start gap-3 mb-4">
-            <span className="text-3xl">📈</span>
-            <div className="flex-1">
-              <h4 className="text-lg font-semibold text-white mb-2">Session Statistics</h4>
-              <p className="text-sm text-gray-400 mb-4">
-                Export current session statistics as CSV. Includes all session metrics, streaks, and
-                performance data.
-              </p>
-              <button
-                onClick={handleExportSessionCSV}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors w-full"
-              >
-                Export CSV
-              </button>
-            </div>
-          </div>
-        </div>
+        ))}
 
         {/* Info Box */}
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -286,4 +209,6 @@ function ExportPanel({ statistics }: ExportPanelProps) {
       </div>
     </div>
   );
-}
+});
+
+ExportPanel.displayName = 'ExportPanel';

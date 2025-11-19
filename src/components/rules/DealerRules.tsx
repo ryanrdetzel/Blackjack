@@ -1,4 +1,5 @@
 import { GameConfig } from '../../lib/types';
+import { ToggleSwitch } from '../ui';
 
 interface DealerRulesProps {
   config: GameConfig;
@@ -18,18 +19,10 @@ export default function DealerRules({ config, onToggle }: DealerRulesProps) {
             Dealer must hit on soft 17 (e.g., Ace-6)
           </div>
         </div>
-        <button
-          onClick={() => onToggle('dealerHitsSoft17')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            config.dealerHitsSoft17 ? 'bg-green-600' : 'bg-gray-600'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              config.dealerHitsSoft17 ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        <ToggleSwitch
+          enabled={config.dealerHitsSoft17}
+          onChange={() => onToggle('dealerHitsSoft17')}
+        />
       </div>
     </section>
   );

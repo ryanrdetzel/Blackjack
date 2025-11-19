@@ -1,3 +1,4 @@
+import React from 'react';
 import Card from './Card';
 import { calculateHandValue } from '../lib/deck';
 import { Card as CardType } from '../lib/types';
@@ -9,7 +10,7 @@ interface HandProps {
   showValue?: boolean;
 }
 
-export default function Hand({ cards, label, hideFirstCard = false, showValue = true }: HandProps) {
+export default React.memo(function Hand({ cards, label, hideFirstCard = false, showValue = true }: HandProps) {
   const { value, isSoft } = calculateHandValue(cards);
 
   // If hiding first card, calculate value without it
@@ -45,4 +46,4 @@ export default function Hand({ cards, label, hideFirstCard = false, showValue = 
       )}
     </div>
   );
-}
+});

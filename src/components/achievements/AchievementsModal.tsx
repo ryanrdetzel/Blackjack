@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Achievement, getAchievementStats } from '../../lib/achievements';
+import { Modal, Button, Badge, ProgressBar, EmptyState } from '../ui';
+import { getRarityColorClass } from '../../lib/uiUtils';
 
 interface AchievementsModalProps {
   achievements: Record<string, Achievement>;
@@ -20,17 +22,6 @@ export function AchievementsModal({ achievements, onClose }: AchievementsModalPr
     return true;
   });
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'text-gray-600 dark:text-gray-400';
-      case 'uncommon': return 'text-green-600 dark:text-green-400';
-      case 'rare': return 'text-blue-600 dark:text-blue-400';
-      case 'epic': return 'text-purple-600 dark:text-purple-400';
-      case 'legendary': return 'text-yellow-600 dark:text-yellow-400';
-      default: return 'text-gray-600';
-    }
-  };
-
   const getRarityBg = (rarity: string) => {
     switch (rarity) {
       case 'common': return 'bg-gray-100 dark:bg-gray-700';
@@ -42,144 +33,140 @@ export function AchievementsModal({ achievements, onClose }: AchievementsModalPr
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Achievements
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {stats.unlocked} of {stats.total} unlocked ({stats.percentage}%)
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
-          >
-            ×
-          </button>
-        </div>
+  const filterButtons = [
+    { id: 'all', label: 'All', variant: 'secondary' as const },
+    { id: 'unlocked', label: `Unlocked (${stats.unlocked})`, variant: 'success' as const },
+    { id: 'locked', label: `Locked (${stats.total - stats.unlocked})`, variant: 'secondary' as const },
+  ];
 
-        {/* Progress Bar */}
-        <div className="px-6 pt-4">
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all"
-              style={{ width: `${stats.percentage}%` }}
-            />
-          </div>
+  const categoryButtons = [
+    { id: 'all', label: 'All' },
+    { id: 'gameplay', label: 'Gameplay' },
+    { id: 'strategy', label: 'Strategy' },
+    { id: 'progression', label: 'Progression' },
+    { id: 'special', label: 'Special' },
+  ];
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Achievements" size="large">
+      <div className="space-y-6">
+        {/* Progress Summary */}
+        <div>
+          <p className="text-sm text-gray-400 mb-3">
+            {stats.unlocked} of {stats.total} unlocked ({stats.percentage}%)
+          </p>
+          <ProgressBar value={stats.percentage} max={100} variant="gradient" />
         </div>
 
         {/* Filters */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex flex-wrap gap-2 mb-3">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 text-sm rounded ${
-                filter === 'all'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter('unlocked')}
-              className={`px-3 py-1 text-sm rounded ${
-                filter === 'unlocked'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Unlocked ({stats.unlocked})
-            </button>
-            <button
-              onClick={() => setFilter('locked')}
-              className={`px-3 py-1 text-sm rounded ${
-                filter === 'locked'
-                  ? 'bg-gray-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Locked ({stats.total - stats.unlocked})
-            </button>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {filterButtons.map((btn) => (
+              <Button
+                key={btn.id}
+                onClick={() => setFilter(btn.id as typeof filter)}
+                variant={filter === btn.id ? 'primary' : btn.variant}
+                size="sm"
+              >
+                {btn.label}
+              </Button>
+            ))}
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {['all', 'gameplay', 'strategy', 'progression', 'special'].map((category) => (
-              <button
-                key={category}
-                onClick={() => setCategoryFilter(category)}
-                className={`px-3 py-1 text-sm rounded capitalize ${
-                  categoryFilter === category
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+            {categoryButtons.map((btn) => (
+              <Button
+                key={btn.id}
+                onClick={() => setCategoryFilter(btn.id)}
+                variant={categoryFilter === btn.id ? 'secondary' : 'ghost'}
+                size="sm"
               >
-                {category}
-              </button>
+                {btn.label.charAt(0).toUpperCase() + btn.label.slice(1)}
+              </Button>
             ))}
           </div>
         </div>
 
         {/* Achievement List */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredAchievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`${getRarityBg(achievement.rarity)} rounded-lg p-4 border-2 ${
-                  achievement.unlocked
-                    ? 'border-green-400 dark:border-green-600'
-                    : 'border-gray-300 dark:border-gray-600 opacity-60'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`text-4xl ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
-                    {achievement.icon}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                        {achievement.name}
-                      </h3>
-                      {achievement.unlocked && (
-                        <span className="text-green-500 text-xl">✓</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {achievement.description}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={`text-xs font-semibold uppercase ${getRarityColor(achievement.rarity)}`}>
-                        {achievement.rarity}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                        {achievement.category}
-                      </span>
-                    </div>
-                    {achievement.unlocked && achievement.unlockedAt && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredAchievements.length === 0 && (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              No achievements found with the current filters.
+        <div className="max-h-[500px] overflow-y-auto">
+          {filteredAchievements.length === 0 ? (
+            <EmptyState
+              icon="🏆"
+              title="No achievements found"
+              description="No achievements match your current filters."
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredAchievements.map((achievement) => (
+                <AchievementCard
+                  key={achievement.id}
+                  achievement={achievement}
+                  getRarityBg={getRarityBg}
+                />
+              ))}
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-6 flex justify-end">
+        <Button onClick={onClose} variant="primary">
+          Close
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
+interface AchievementCardProps {
+  achievement: Achievement;
+  getRarityBg: (rarity: string) => string;
+}
+
+const AchievementCard = React.memo(({ achievement, getRarityBg }: AchievementCardProps) => {
+  return (
+    <div
+      className={`${getRarityBg(achievement.rarity)} rounded-lg p-4 border-2 ${
+        achievement.unlocked
+          ? 'border-green-400 dark:border-green-600'
+          : 'border-gray-300 dark:border-gray-600 opacity-60'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`text-4xl ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
+          {achievement.icon}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-start justify-between">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+              {achievement.name}
+            </h3>
+            {achievement.unlocked && (
+              <span className="text-green-500 text-xl">✓</span>
+            )}
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {achievement.description}
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <Badge color={getRarityColorClass(achievement.rarity)}>
+              {achievement.rarity.toUpperCase()}
+            </Badge>
+            <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+              {achievement.category}
+            </span>
+          </div>
+          {achievement.unlocked && achievement.unlockedAt && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
+            </p>
           )}
         </div>
       </div>
     </div>
   );
-}
+});
+
+AchievementCard.displayName = 'AchievementCard';
