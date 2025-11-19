@@ -16,6 +16,16 @@ import {
   ZERO,
 } from './constants';
 import { getBasicStrategy, StrategyDecision } from './strategy';
+import {
+  StatisticsState,
+  createInitialStatistics,
+  recordHand,
+  recordSplit,
+  recordDouble,
+  recordSurrender,
+  resetSession,
+  clearAllStatistics,
+} from './statistics';
 
 // Game state types
 interface GameHand {
@@ -114,6 +124,7 @@ export interface GameState {
   settings: GameSettings;
   learningMode: LearningModeState;
   speedTraining: SpeedTrainingState;
+  statistics: StatisticsState;
 }
 
 // Action types
@@ -141,7 +152,9 @@ type GameAction =
   | { type: 'START_DECISION_TIMER' }
   | { type: 'RECORD_SPEED_DECISION'; action: string; timeMs: number }
   | { type: 'TIMEOUT_DECISION' }
-  | { type: 'UPDATE_DIFFICULTY'; difficulty: DifficultyLevel };
+  | { type: 'UPDATE_DIFFICULTY'; difficulty: DifficultyLevel }
+  | { type: 'RESET_SESSION_STATS' }
+  | { type: 'CLEAR_ALL_STATS' };
 
 /**
  * Create initial game state
@@ -206,6 +219,7 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
         speedTarget: 5000,
       },
     },
+    statistics: createInitialStatistics(),
   };
 }
 
@@ -425,6 +439,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           shoe: draw.remainingShoe,
           playerHands: newHands,
           phase: GAME_PHASES.DEALER_TURN,
+          statistics: recordDouble(state.statistics),
         };
       }
 
@@ -434,6 +449,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         shoe: draw.remainingShoe,
         playerHands: newHands,
         activeHandIndex: nextHandIndex,
+        statistics: recordDouble(state.statistics),
       };
     }
 
@@ -503,6 +519,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         shoe,
         playerHands: newHands,
+        statistics: recordSplit(state.statistics),
       };
     }
 
@@ -532,6 +549,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           playerHands: newHands,
           phase: GAME_PHASES.DEALER_TURN,
+          statistics: recordSurrender(state.statistics),
         };
       }
 
@@ -540,6 +558,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         playerHands: newHands,
         activeHandIndex: nextHandIndex,
+        statistics: recordSurrender(state.statistics),
       };
     }
 
@@ -593,7 +612,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
-      // Process each hand
+      // Process each hand and collect results for statistics
+      const handResults: { cards: Card[]; bet: number; result: GameResult; payout: number }[] = [];
+
       state.playerHands.forEach((hand, index) => {
         let result: string;
         let handPayout = 0;
@@ -625,6 +646,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
 
         totalPayout += handPayout;
+
+        // Collect result for statistics
+        handResults.push({
+          cards: hand.cards,
+          bet: hand.bet,
+          result: result as GameResult,
+          payout: handPayout,
+        });
       });
 
       // Calculate total bet (all hands + insurance)
@@ -642,6 +671,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ? `Total: -$${Math.abs(netProfit).toFixed(2)}`
         : 'Total: Break even';
 
+      // Record hand in statistics
+      const newStatistics = recordHand(
+        state.statistics,
+        handResults,
+        dealerHand,
+        state.insurance,
+        dealerBlackjack && state.insurance > 0,
+        state.config.name,
+        newBalance
+      );
+
       return {
         ...state,
         shoe,
@@ -650,6 +690,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         result: netProfit > ZERO ? 'win' : netProfit < ZERO ? 'lose' : 'push',
         resultMessage: [...resultMessages, overallMessage].join('\n'),
         balance: newBalance,
+        statistics: newStatistics,
       };
     }
 
@@ -1106,6 +1147,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           difficulty,
           timeLimit: timeLimits[difficulty],
         },
+      };
+    }
+
+    case 'RESET_SESSION_STATS': {
+      return {
+        ...state,
+        statistics: resetSession(state.statistics),
+      };
+    }
+
+    case 'CLEAR_ALL_STATS': {
+      return {
+        ...state,
+        statistics: clearAllStatistics(),
       };
     }
 

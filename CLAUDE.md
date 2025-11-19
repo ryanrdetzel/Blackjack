@@ -94,6 +94,15 @@ Advanced moves: double down, split pairs, insurance, surrender, multi-hand suppo
 ### Milestone 3 ✅
 Customization system: preset configurations (Vegas Strip, Atlantic City, European, etc.), save/load custom configurations, export/import JSON, configuration manager UI
 
+### Milestone 4 ✅
+Learning Mode - Basic Strategy: real-time strategy hints, color-coded optimal actions, mistake tracking, post-hand analysis, strategy chart viewer
+
+### Milestone 5 ✅
+Learning Mode - Speed Training: decision timer, progressive difficulty, accuracy + speed scoring, performance statistics, training sessions
+
+### Milestone 6 ✅
+Statistics & History: session and all-time statistics, hand history viewer, bankroll chart, data export (CSV/JSON), comprehensive performance metrics
+
 ## Current Architecture Decisions
 
 ### Why useReducer?
@@ -131,9 +140,6 @@ pnpm preview
 ## Future Development Notes
 
 See `PLAN.md` for detailed roadmap. Key upcoming features:
-- **Milestone 4**: Strategy hints and learning mode
-- **Milestone 5**: Speed training mode
-- **Milestone 6**: Statistics and hand history
 - **Milestone 7**: Advanced features (side bets, card counting, achievements)
 - **Milestone 8**: Sharing & portability (URL encoding, QR codes)
 
@@ -192,4 +198,76 @@ See `PLAN.md` for detailed roadmap. Key upcoming features:
 
 ---
 
-Last Updated: 2025-11-18
+## Milestone 6 Implementation Details
+
+### Statistics System
+- **Location**: `src/lib/statistics.ts` - Complete statistics tracking system with data models and helper functions
+- **State Integration**: Statistics state added to `GameState` in `src/lib/gameState.ts`
+- **Storage Keys**:
+  - `blackjack_statistics` - All-time statistics
+  - `blackjack_hand_history` - Hand history records (last 500 hands)
+  - `blackjack_bankroll_history` - Bankroll snapshots (last 1000 snapshots)
+
+### Components
+- **StatisticsModal** (`src/components/statistics/StatisticsModal.tsx`) - Main modal with tabbed interface
+- **StatisticsDashboard** (`src/components/statistics/StatisticsDashboard.tsx`) - Session and all-time statistics dashboard
+- **HandHistoryViewer** (`src/components/statistics/HandHistoryViewer.tsx`) - Detailed hand history with filtering and sorting
+- **BankrollChart** (`src/components/statistics/BankrollChart.tsx`) - SVG-based line chart for bankroll visualization
+
+### Statistics Tracked
+
+#### Session Statistics
+- Hands played, won, lost, pushed
+- Blackjacks hit
+- Total wagered, total payout, net profit
+- Biggest win/loss
+- Win/loss streaks (current and longest)
+- Splits, doubles, surrenders performed
+- Insurance taken and won
+- Session duration
+
+#### All-Time Statistics
+- All session stats aggregated across all sessions
+- Sessions played
+- First and last played timestamps
+- Lifetime totals for all metrics
+
+#### Hand History
+- Complete record of each hand played
+- Player hands with cards, bets, results, and payouts
+- Dealer hand
+- Insurance amount
+- Configuration used
+- Timestamp
+
+#### Bankroll History
+- Balance snapshot after each hand
+- Timestamp and hand ID reference
+- Used for charting balance over time
+
+### Features
+- **Real-time tracking**: All actions (hit, stand, double, split, surrender) automatically tracked
+- **Session management**: Start new sessions while preserving all-time stats
+- **Data persistence**: All statistics saved to localStorage
+- **Export functionality**:
+  - Complete statistics as JSON
+  - Hand history as CSV
+  - Session statistics as CSV
+- **Visualization**: Interactive bankroll chart with multiple time ranges
+- **Hand detail view**: Click any hand in history to see full details
+- **Filtering**: Filter hand history by wins/losses
+- **Clear all**: Option to completely reset all statistics
+
+### Actions
+- `RESET_SESSION_STATS` - Start a new session (increments session count)
+- `CLEAR_ALL_STATS` - Clear all statistics and history
+
+### Integration Points
+- Statistics automatically recorded in `DEALER_PLAY` action when hand completes
+- Split, double, surrender actions tracked as they occur
+- Balance snapshots recorded after each hand
+- Accessible via Statistics button (📈) in header
+
+---
+
+Last Updated: 2025-11-19

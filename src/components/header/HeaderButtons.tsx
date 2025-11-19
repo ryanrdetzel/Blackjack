@@ -2,6 +2,7 @@ interface HeaderButtonsProps {
   onOpenConfigurations: () => void;
   onOpenTableRules: () => void;
   onOpenSettings: () => void;
+  onOpenStatistics?: () => void;
   learningModeEnabled?: boolean;
   onToggleLearningMode?: () => void;
   onOpenStrategyChart?: () => void;
@@ -14,6 +15,7 @@ export default function HeaderButtons({
   onOpenConfigurations,
   onOpenTableRules,
   onOpenSettings,
+  onOpenStatistics,
   learningModeEnabled = false,
   onToggleLearningMode,
   onOpenStrategyChart,
@@ -72,6 +74,17 @@ export default function HeaderButtons({
           title="View Mistakes"
         >
           📝
+        </button>
+      )}
+
+      {/* Statistics */}
+      {onOpenStatistics && (
+        <button
+          onClick={onOpenStatistics}
+          className="text-2xl px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+          title="Statistics"
+        >
+          📈
         </button>
       )}
 
