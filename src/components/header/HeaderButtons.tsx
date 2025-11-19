@@ -6,6 +6,8 @@ interface HeaderButtonsProps {
   onToggleLearningMode?: () => void;
   onOpenStrategyChart?: () => void;
   onOpenMistakes?: () => void;
+  onOpenSpeedTraining?: () => void;
+  speedTrainingActive?: boolean;
 }
 
 export default function HeaderButtons({
@@ -15,7 +17,9 @@ export default function HeaderButtons({
   learningModeEnabled = false,
   onToggleLearningMode,
   onOpenStrategyChart,
-  onOpenMistakes
+  onOpenMistakes,
+  onOpenSpeedTraining,
+  speedTrainingActive = false
 }: HeaderButtonsProps) {
   return (
     <div className="flex items-center gap-2">
@@ -31,6 +35,21 @@ export default function HeaderButtons({
           title={learningModeEnabled ? 'Learning Mode: ON' : 'Learning Mode: OFF'}
         >
           🎓
+        </button>
+      )}
+
+      {/* Speed Training */}
+      {onOpenSpeedTraining && (
+        <button
+          onClick={onOpenSpeedTraining}
+          className={`text-2xl px-3 py-1 rounded transition-colors ${
+            speedTrainingActive
+              ? 'bg-purple-600 hover:bg-purple-700'
+              : 'bg-gray-700 hover:bg-gray-600'
+          }`}
+          title={speedTrainingActive ? 'Speed Training: ACTIVE' : 'Speed Training'}
+        >
+          ⚡
         </button>
       )}
 

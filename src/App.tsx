@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useState } from 'react';
-import { gameReducer, createInitialState, GameState } from './lib/gameState';
+import { gameReducer, createInitialState, GameState, DifficultyLevel } from './lib/gameState';
 import { GAME_PHASES, GameConfig } from './lib/types';
 import { isPair } from './lib/deck';
 import {
@@ -20,6 +20,10 @@ import Header from './components/header/Header';
 import GameTable from './components/game/GameTable';
 import StrategyChart from './components/learning/StrategyChart';
 import MistakesViewer from './components/learning/MistakesViewer';
+import { SpeedTrainingControls } from './components/speedtraining/SpeedTrainingControls';
+import { SpeedTrainingStats } from './components/speedtraining/SpeedTrainingStats';
+import { DecisionTimer } from './components/speedtraining/DecisionTimer';
+import { SessionSummary } from './components/speedtraining/SessionSummary';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null as unknown as GameState, createInitialState);
@@ -28,6 +32,9 @@ function App() {
   const [configManagerOpen, setConfigManagerOpen] = useState(false);
   const [strategyChartOpen, setStrategyChartOpen] = useState(false);
   const [mistakesViewerOpen, setMistakesViewerOpen] = useState(false);
+  const [speedTrainingOpen, setSpeedTrainingOpen] = useState(false);
+  const [sessionSummaryOpen, setSessionSummaryOpen] = useState(false);
+  const [lastCompletedSession, setLastCompletedSession] = useState<typeof state.speedTraining.currentSession | null>(null);
 
   // Auto-deal after bet is placed
   useEffect(() => {
@@ -56,40 +63,62 @@ function App() {
     }
   }, [state.phase, state.activeHandIndex, state.playerHands, state.dealerHand, state.settings.learningModeEnabled]);
 
+  // Start decision timer in speed training mode
+  useEffect(() => {
+    if (state.speedTraining.isActive && state.phase === GAME_PHASES.PLAYER_TURN && !state.speedTraining.currentDecisionStartTime) {
+      dispatch({ type: 'START_DECISION_TIMER' });
+    }
+  }, [state.speedTraining.isActive, state.phase, state.activeHandIndex, state.speedTraining.currentDecisionStartTime]);
+
   const handlePlaceBet = (amount: number) => {
     dispatch({ type: 'PLACE_BET', amount });
   };
 
   const handleHit = () => {
-    if (state.settings.learningModeEnabled) {
+    if (state.speedTraining.isActive && state.speedTraining.currentDecisionStartTime) {
+      const timeMs = Date.now() - state.speedTraining.currentDecisionStartTime;
+      dispatch({ type: 'RECORD_SPEED_DECISION', action: 'HIT', timeMs });
+    } else if (state.settings.learningModeEnabled) {
       dispatch({ type: 'RECORD_DECISION', action: 'HIT' });
     }
     dispatch({ type: 'HIT' });
   };
 
   const handleStand = () => {
-    if (state.settings.learningModeEnabled) {
+    if (state.speedTraining.isActive && state.speedTraining.currentDecisionStartTime) {
+      const timeMs = Date.now() - state.speedTraining.currentDecisionStartTime;
+      dispatch({ type: 'RECORD_SPEED_DECISION', action: 'STAND', timeMs });
+    } else if (state.settings.learningModeEnabled) {
       dispatch({ type: 'RECORD_DECISION', action: 'STAND' });
     }
     dispatch({ type: 'STAND' });
   };
 
   const handleDouble = () => {
-    if (state.settings.learningModeEnabled) {
+    if (state.speedTraining.isActive && state.speedTraining.currentDecisionStartTime) {
+      const timeMs = Date.now() - state.speedTraining.currentDecisionStartTime;
+      dispatch({ type: 'RECORD_SPEED_DECISION', action: 'DOUBLE', timeMs });
+    } else if (state.settings.learningModeEnabled) {
       dispatch({ type: 'RECORD_DECISION', action: 'DOUBLE' });
     }
     dispatch({ type: 'DOUBLE' });
   };
 
   const handleSplit = () => {
-    if (state.settings.learningModeEnabled) {
+    if (state.speedTraining.isActive && state.speedTraining.currentDecisionStartTime) {
+      const timeMs = Date.now() - state.speedTraining.currentDecisionStartTime;
+      dispatch({ type: 'RECORD_SPEED_DECISION', action: 'SPLIT', timeMs });
+    } else if (state.settings.learningModeEnabled) {
       dispatch({ type: 'RECORD_DECISION', action: 'SPLIT' });
     }
     dispatch({ type: 'SPLIT' });
   };
 
   const handleSurrender = () => {
-    if (state.settings.learningModeEnabled) {
+    if (state.speedTraining.isActive && state.speedTraining.currentDecisionStartTime) {
+      const timeMs = Date.now() - state.speedTraining.currentDecisionStartTime;
+      dispatch({ type: 'RECORD_SPEED_DECISION', action: 'SURRENDER', timeMs });
+    } else if (state.settings.learningModeEnabled) {
       dispatch({ type: 'RECORD_DECISION', action: 'SURRENDER' });
     }
     dispatch({ type: 'SURRENDER' });
@@ -130,6 +159,32 @@ function App() {
     setMistakesViewerOpen(false);
   };
 
+  // Speed training handlers
+  const handleStartSpeedTraining = (
+    difficulty: DifficultyLevel,
+    handsTarget: number,
+    accuracyTarget: number,
+    speedTarget: number
+  ) => {
+    dispatch({ type: 'START_SPEED_TRAINING', difficulty, handsTarget, accuracyTarget, speedTarget });
+    setSpeedTrainingOpen(false);
+  };
+
+  const handleStopSpeedTraining = () => {
+    const currentSession = state.speedTraining.currentSession;
+    dispatch({ type: 'STOP_SPEED_TRAINING' });
+    if (currentSession) {
+      setLastCompletedSession({ ...currentSession, endTime: Date.now() });
+      setSessionSummaryOpen(true);
+    }
+  };
+
+  const handleTimeoutDecision = () => {
+    dispatch({ type: 'TIMEOUT_DECISION' });
+    // Auto-stand after timeout
+    dispatch({ type: 'STAND' });
+  };
+
   // Determine which actions are available
   const currentHand = state.playerHands[state.activeHandIndex];
   const canDouble = currentHand &&
@@ -167,7 +222,32 @@ function App() {
         onToggleLearningMode={handleToggleLearningMode}
         onOpenStrategyChart={() => setStrategyChartOpen(true)}
         onOpenMistakes={() => setMistakesViewerOpen(true)}
+        onOpenSpeedTraining={() => setSpeedTrainingOpen(true)}
+        speedTrainingActive={state.speedTraining.isActive}
       />
+
+      {/* Speed Training UI */}
+      {state.speedTraining.isActive && (
+        <div className="max-w-6xl mx-auto p-4 space-y-4">
+          {/* Decision Timer */}
+          {state.phase === GAME_PHASES.PLAYER_TURN && (
+            <DecisionTimer
+              timeLimit={state.speedTraining.timeLimit}
+              startTime={state.speedTraining.currentDecisionStartTime}
+              onTimeout={handleTimeoutDecision}
+              isActive={state.phase === GAME_PHASES.PLAYER_TURN}
+            />
+          )}
+
+          {/* Speed Training Stats */}
+          <SpeedTrainingStats
+            session={state.speedTraining.currentSession}
+            difficulty={state.speedTraining.difficulty}
+            sessionGoal={state.speedTraining.sessionGoal}
+            consecutiveCorrectFast={state.speedTraining.consecutiveCorrectFast}
+          />
+        </div>
+      )}
 
       <GameTable
         phase={state.phase}
@@ -267,6 +347,58 @@ function App() {
         onClose={() => setMistakesViewerOpen(false)}
         onClear={handleClearMistakes}
       />
+
+      {/* Speed Training Controls Modal */}
+      {speedTrainingOpen && !state.speedTraining.isActive && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="max-w-4xl w-full">
+            <div className="bg-gray-900 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-white">⚡ Speed Training</h2>
+                <button
+                  onClick={() => setSpeedTrainingOpen(false)}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+              <SpeedTrainingControls
+                isActive={state.speedTraining.isActive}
+                onStart={handleStartSpeedTraining}
+                onStop={handleStopSpeedTraining}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Speed Training Control */}
+      {state.speedTraining.isActive && (
+        <div className="fixed bottom-20 left-4 z-40">
+          <SpeedTrainingControls
+            isActive={state.speedTraining.isActive}
+            onStart={handleStartSpeedTraining}
+            onStop={handleStopSpeedTraining}
+          />
+        </div>
+      )}
+
+      {/* Session Summary Modal */}
+      {sessionSummaryOpen && lastCompletedSession && (
+        <SessionSummary
+          session={lastCompletedSession}
+          sessionGoal={state.speedTraining.sessionGoal}
+          onClose={() => {
+            setSessionSummaryOpen(false);
+            setLastCompletedSession(null);
+          }}
+          onNewSession={() => {
+            setSessionSummaryOpen(false);
+            setLastCompletedSession(null);
+            setSpeedTrainingOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

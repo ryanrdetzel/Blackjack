@@ -57,6 +57,47 @@ export interface LearningModeState {
   } | null;
 }
 
+// Speed training types
+export interface DecisionRecord {
+  handDescription: string;
+  dealerUpCard: string;
+  action: string;
+  wasCorrect: boolean;
+  timeMs: number;
+  timestamp: number;
+}
+
+export interface SpeedTrainingSession {
+  startTime: number;
+  endTime: number | null;
+  handsPlayed: number;
+  correctDecisions: number;
+  totalDecisions: number;
+  averageDecisionTime: number;
+  fastestDecision: number;
+  slowestDecision: number;
+  decisions: DecisionRecord[];
+}
+
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
+
+export interface SpeedTrainingState {
+  isActive: boolean;
+  difficulty: DifficultyLevel;
+  timeLimit: number; // milliseconds
+  currentDecisionStartTime: number | null;
+  currentSession: SpeedTrainingSession | null;
+  sessionHistory: SpeedTrainingSession[];
+  // Progressive difficulty
+  consecutiveCorrectFast: number; // Track streak for difficulty increase
+  // Goals
+  sessionGoal: {
+    handsTarget: number;
+    accuracyTarget: number; // percentage
+    speedTarget: number; // average ms per decision
+  };
+}
+
 export interface GameState {
   phase: GamePhase;
   balance: number;
@@ -72,6 +113,7 @@ export interface GameState {
   config: GameConfig;
   settings: GameSettings;
   learningMode: LearningModeState;
+  speedTraining: SpeedTrainingState;
 }
 
 // Action types
@@ -93,7 +135,13 @@ type GameAction =
   | { type: 'TOGGLE_LEARNING_MODE' }
   | { type: 'UPDATE_STRATEGY_HINT' }
   | { type: 'RECORD_DECISION'; action: string }
-  | { type: 'CLEAR_MISTAKES' };
+  | { type: 'CLEAR_MISTAKES' }
+  | { type: 'START_SPEED_TRAINING'; difficulty: DifficultyLevel; handsTarget: number; accuracyTarget: number; speedTarget: number }
+  | { type: 'STOP_SPEED_TRAINING' }
+  | { type: 'START_DECISION_TIMER' }
+  | { type: 'RECORD_SPEED_DECISION'; action: string; timeMs: number }
+  | { type: 'TIMEOUT_DECISION' }
+  | { type: 'UPDATE_DIFFICULTY'; difficulty: DifficultyLevel };
 
 /**
  * Create initial game state
@@ -143,6 +191,20 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
       correctDecisions: 0,
       totalDecisions: 0,
       lastDecision: null,
+    },
+    speedTraining: {
+      isActive: false,
+      difficulty: 'beginner',
+      timeLimit: 10000, // 10 seconds for beginner
+      currentDecisionStartTime: null,
+      currentSession: null,
+      sessionHistory: [],
+      consecutiveCorrectFast: 0,
+      sessionGoal: {
+        handsTarget: 20,
+        accuracyTarget: 90,
+        speedTarget: 5000,
+      },
     },
   };
 }
@@ -818,6 +880,231 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           correctDecisions: 0,
           totalDecisions: 0,
           lastDecision: null,
+        },
+      };
+    }
+
+    case 'START_SPEED_TRAINING': {
+      const { difficulty, handsTarget, accuracyTarget, speedTarget } = action;
+
+      // Determine time limit based on difficulty
+      const timeLimits: Record<DifficultyLevel, number> = {
+        beginner: 10000,    // 10 seconds
+        intermediate: 7000, // 7 seconds
+        advanced: 5000,     // 5 seconds
+        expert: 3000,       // 3 seconds
+      };
+
+      const newSession: SpeedTrainingSession = {
+        startTime: Date.now(),
+        endTime: null,
+        handsPlayed: 0,
+        correctDecisions: 0,
+        totalDecisions: 0,
+        averageDecisionTime: 0,
+        fastestDecision: Infinity,
+        slowestDecision: 0,
+        decisions: [],
+      };
+
+      return {
+        ...state,
+        speedTraining: {
+          ...state.speedTraining,
+          isActive: true,
+          difficulty,
+          timeLimit: timeLimits[difficulty],
+          currentSession: newSession,
+          sessionGoal: {
+            handsTarget,
+            accuracyTarget,
+            speedTarget,
+          },
+        },
+        settings: {
+          ...state.settings,
+          learningModeEnabled: true, // Auto-enable learning mode
+        },
+      };
+    }
+
+    case 'STOP_SPEED_TRAINING': {
+      if (!state.speedTraining.currentSession) {
+        return state;
+      }
+
+      const completedSession: SpeedTrainingSession = {
+        ...state.speedTraining.currentSession,
+        endTime: Date.now(),
+      };
+
+      return {
+        ...state,
+        speedTraining: {
+          ...state.speedTraining,
+          isActive: false,
+          currentSession: null,
+          currentDecisionStartTime: null,
+          sessionHistory: [...state.speedTraining.sessionHistory, completedSession],
+        },
+      };
+    }
+
+    case 'START_DECISION_TIMER': {
+      return {
+        ...state,
+        speedTraining: {
+          ...state.speedTraining,
+          currentDecisionStartTime: Date.now(),
+        },
+      };
+    }
+
+    case 'RECORD_SPEED_DECISION': {
+      if (!state.speedTraining.isActive || !state.speedTraining.currentSession || !state.learningMode.currentStrategy) {
+        return state;
+      }
+
+      const { action: playerAction, timeMs } = action;
+      const optimalAction = state.learningMode.currentStrategy.primaryAction;
+      const wasCorrect = playerAction === optimalAction;
+      const currentHand = state.playerHands[state.activeHandIndex];
+      const dealerCard = state.dealerHand[0];
+
+      const decisionRecord: DecisionRecord = {
+        handDescription: `${currentHand.cards.map(c => c.rank + c.suit).join(', ')}`,
+        dealerUpCard: `${dealerCard.rank}${dealerCard.suit}`,
+        action: playerAction,
+        wasCorrect,
+        timeMs,
+        timestamp: Date.now(),
+      };
+
+      const currentSession = state.speedTraining.currentSession;
+      const newDecisions = [...currentSession.decisions, decisionRecord];
+      const newCorrectDecisions = currentSession.correctDecisions + (wasCorrect ? 1 : 0);
+      const newTotalDecisions = currentSession.totalDecisions + 1;
+
+      // Calculate new average decision time
+      const totalTime = newDecisions.reduce((sum, d) => sum + d.timeMs, 0);
+      const averageDecisionTime = totalTime / newDecisions.length;
+
+      // Update fastest and slowest
+      const fastestDecision = Math.min(currentSession.fastestDecision, timeMs);
+      const slowestDecision = Math.max(currentSession.slowestDecision, timeMs);
+
+      // Check for progressive difficulty increase
+      let consecutiveCorrectFast = state.speedTraining.consecutiveCorrectFast;
+      let newDifficulty = state.speedTraining.difficulty;
+      let newTimeLimit = state.speedTraining.timeLimit;
+
+      if (wasCorrect && timeMs < state.speedTraining.timeLimit * 0.7) {
+        // Decision was correct and fast (< 70% of time limit)
+        consecutiveCorrectFast += 1;
+
+        // Increase difficulty after 5 consecutive fast correct decisions
+        if (consecutiveCorrectFast >= 5) {
+          const difficultyLevels: DifficultyLevel[] = ['beginner', 'intermediate', 'advanced', 'expert'];
+          const currentIndex = difficultyLevels.indexOf(state.speedTraining.difficulty);
+          if (currentIndex < difficultyLevels.length - 1) {
+            newDifficulty = difficultyLevels[currentIndex + 1];
+            const timeLimits: Record<DifficultyLevel, number> = {
+              beginner: 10000,
+              intermediate: 7000,
+              advanced: 5000,
+              expert: 3000,
+            };
+            newTimeLimit = timeLimits[newDifficulty];
+            consecutiveCorrectFast = 0; // Reset streak
+          }
+        }
+      } else {
+        consecutiveCorrectFast = 0; // Reset streak on slow or incorrect decision
+      }
+
+      const updatedSession: SpeedTrainingSession = {
+        ...currentSession,
+        correctDecisions: newCorrectDecisions,
+        totalDecisions: newTotalDecisions,
+        averageDecisionTime,
+        fastestDecision,
+        slowestDecision,
+        decisions: newDecisions,
+      };
+
+      return {
+        ...state,
+        speedTraining: {
+          ...state.speedTraining,
+          currentSession: updatedSession,
+          currentDecisionStartTime: null,
+          consecutiveCorrectFast,
+          difficulty: newDifficulty,
+          timeLimit: newTimeLimit,
+        },
+      };
+    }
+
+    case 'TIMEOUT_DECISION': {
+      if (!state.speedTraining.isActive || !state.speedTraining.currentSession || !state.learningMode.currentStrategy) {
+        return state;
+      }
+
+      const optimalAction = state.learningMode.currentStrategy.primaryAction;
+      const currentHand = state.playerHands[state.activeHandIndex];
+      const dealerCard = state.dealerHand[0];
+      const timeMs = state.speedTraining.timeLimit;
+
+      const decisionRecord: DecisionRecord = {
+        handDescription: `${currentHand.cards.map(c => c.rank + c.suit).join(', ')}`,
+        dealerUpCard: `${dealerCard.rank}${dealerCard.suit}`,
+        action: 'TIMEOUT',
+        wasCorrect: false,
+        timeMs,
+        timestamp: Date.now(),
+      };
+
+      const currentSession = state.speedTraining.currentSession;
+      const newDecisions = [...currentSession.decisions, decisionRecord];
+      const newTotalDecisions = currentSession.totalDecisions + 1;
+
+      const totalTime = newDecisions.reduce((sum, d) => sum + d.timeMs, 0);
+      const averageDecisionTime = totalTime / newDecisions.length;
+
+      const updatedSession: SpeedTrainingSession = {
+        ...currentSession,
+        totalDecisions: newTotalDecisions,
+        averageDecisionTime,
+        slowestDecision: Math.max(currentSession.slowestDecision, timeMs),
+        decisions: newDecisions,
+      };
+
+      return {
+        ...state,
+        speedTraining: {
+          ...state.speedTraining,
+          currentSession: updatedSession,
+          currentDecisionStartTime: null,
+          consecutiveCorrectFast: 0, // Reset streak on timeout
+        },
+      };
+    }
+
+    case 'UPDATE_DIFFICULTY': {
+      const { difficulty } = action;
+      const timeLimits: Record<DifficultyLevel, number> = {
+        beginner: 10000,
+        intermediate: 7000,
+        advanced: 5000,
+        expert: 3000,
+      };
+
+      return {
+        ...state,
+        speedTraining: {
+          ...state.speedTraining,
+          difficulty,
+          timeLimit: timeLimits[difficulty],
         },
       };
     }
