@@ -309,8 +309,9 @@ function App() {
 
   const canInsurance = state.phase === GAME_PHASES.PLAYER_TURN &&
     state.config.insuranceAllowed &&
-    state.dealerHand.length > ZERO &&
-    state.dealerHand[FIRST_INDEX].rank === 'A' &&
+    state.dealerHand.length > 1 &&
+    // dealerHand[1] is the visible up card during player turn
+    state.dealerHand[1].rank === 'A' &&
     state.insurance === ZERO &&
     state.activeHandIndex === FIRST_INDEX &&
     (state.currentBet / INSURANCE_BET_DIVISOR) <= state.balance;
