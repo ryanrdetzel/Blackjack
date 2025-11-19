@@ -1,4 +1,5 @@
 import { GameConfig } from '../../lib/types';
+import { ToggleSwitch } from '../ui';
 
 interface OtherRulesProps {
   config: GameConfig;
@@ -18,18 +19,10 @@ export default function OtherRules({ config, onToggle }: OtherRulesProps) {
             Allow surrendering hand for half the bet back
           </div>
         </div>
-        <button
-          onClick={() => onToggle('surrenderAllowed')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            config.surrenderAllowed ? 'bg-green-600' : 'bg-gray-600'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              config.surrenderAllowed ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        <ToggleSwitch
+          enabled={config.surrenderAllowed}
+          onChange={() => onToggle('surrenderAllowed')}
+        />
       </div>
 
       <div className="flex items-center justify-between">
@@ -39,18 +32,10 @@ export default function OtherRules({ config, onToggle }: OtherRulesProps) {
             Allow insurance bet when dealer shows Ace (pays 2:1)
           </div>
         </div>
-        <button
-          onClick={() => onToggle('insuranceAllowed')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            config.insuranceAllowed ? 'bg-green-600' : 'bg-gray-600'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              config.insuranceAllowed ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        <ToggleSwitch
+          enabled={config.insuranceAllowed}
+          onChange={() => onToggle('insuranceAllowed')}
+        />
       </div>
     </section>
   );

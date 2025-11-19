@@ -1,3 +1,4 @@
+import React from 'react';
 import clsx from 'clsx';
 import { Card as CardType } from '../lib/types';
 import { CARD_BACK_SYMBOL, RED_SUITS } from '../lib/constants';
@@ -7,7 +8,7 @@ interface CardProps {
   faceDown?: boolean;
 }
 
-export default function Card({ card, faceDown = false }: CardProps) {
+export default React.memo(function Card({ card, faceDown = false }: CardProps) {
   if (faceDown) {
     return (
       <div className="card card-back select-none">
@@ -41,4 +42,4 @@ export default function Card({ card, faceDown = false }: CardProps) {
       </div>
     </div>
   );
-}
+});

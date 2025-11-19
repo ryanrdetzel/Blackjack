@@ -1,5 +1,6 @@
 import { GameConfig } from '../../lib/types';
 import { MIN_SPLITS, MAX_SPLITS } from '../../lib/constants';
+import { ToggleSwitch } from '../ui';
 
 interface SplitRulesProps {
   config: GameConfig;
@@ -20,18 +21,10 @@ export default function SplitRules({ config, onToggle, onNumberChange }: SplitRu
             Allow doubling down after splitting a pair
           </div>
         </div>
-        <button
-          onClick={() => onToggle('doubleAfterSplit')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            config.doubleAfterSplit ? 'bg-green-600' : 'bg-gray-600'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              config.doubleAfterSplit ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        <ToggleSwitch
+          enabled={config.doubleAfterSplit}
+          onChange={() => onToggle('doubleAfterSplit')}
+        />
       </div>
 
       <div className="flex items-center justify-between">
@@ -41,18 +34,10 @@ export default function SplitRules({ config, onToggle, onNumberChange }: SplitRu
             Allow re-splitting aces after initial split
           </div>
         </div>
-        <button
-          onClick={() => onToggle('resplitAcesAllowed')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            config.resplitAcesAllowed ? 'bg-green-600' : 'bg-gray-600'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              config.resplitAcesAllowed ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        <ToggleSwitch
+          enabled={config.resplitAcesAllowed}
+          onChange={() => onToggle('resplitAcesAllowed')}
+        />
       </div>
 
       <div className="flex items-center justify-between">
