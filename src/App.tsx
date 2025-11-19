@@ -375,6 +375,7 @@ function App() {
         onInsurance={handleInsurance}
         learningMode={state.learningMode}
         learningModeEnabled={state.settings.learningModeEnabled}
+        showHandTotal={state.settings.showHandTotal}
       />
 
       {/* Betting Modal */}

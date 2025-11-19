@@ -27,6 +27,7 @@ interface GameTableProps {
   onInsurance: () => void;
   learningMode?: LearningModeState;
   learningModeEnabled?: boolean;
+  showHandTotal?: boolean;
 }
 
 export default function GameTable({
@@ -48,6 +49,7 @@ export default function GameTable({
   onInsurance,
   learningMode,
   learningModeEnabled = false,
+  showHandTotal = true,
 }: GameTableProps) {
   return (
     <>
@@ -67,12 +69,14 @@ export default function GameTable({
           <DealerArea
             cards={dealerHand}
             hideFirstCard={phase === GAME_PHASES.PLAYER_TURN}
+            showHandTotal={showHandTotal}
           />
 
           <PlayerArea
             hands={playerHands}
             activeHandIndex={activeHandIndex}
             isPlayerTurn={phase === GAME_PHASES.PLAYER_TURN}
+            showHandTotal={showHandTotal}
           />
 
           {/* Player Controls - Now closer to the cards */}

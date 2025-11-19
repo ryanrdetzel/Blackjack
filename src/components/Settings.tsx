@@ -6,6 +6,7 @@ interface GameSettings {
   autoDeal: boolean;
   lastBetAmount: number;
   soundEnabled?: boolean;
+  showHandTotal?: boolean;
 }
 
 interface SettingsProps {
@@ -70,6 +71,19 @@ export default function Settings({ settings, onUpdateSettings, isOpen, onClose }
           <ToggleSwitch
             enabled={settings.soundEnabled ?? true}
             onChange={() => handleToggle('soundEnabled')}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-white font-semibold">Show Hand Totals</div>
+            <div className="text-gray-400 text-sm">
+              Display hand values under cards (turn off to practice mental math)
+            </div>
+          </div>
+          <ToggleSwitch
+            enabled={settings.showHandTotal ?? true}
+            onChange={() => handleToggle('showHandTotal')}
           />
         </div>
       </div>

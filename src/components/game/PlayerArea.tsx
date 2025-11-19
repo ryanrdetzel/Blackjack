@@ -6,9 +6,10 @@ interface PlayerAreaProps {
   hands: PlayerHand[];
   activeHandIndex: number;
   isPlayerTurn: boolean;
+  showHandTotal?: boolean;
 }
 
-export default function PlayerArea({ hands, activeHandIndex, isPlayerTurn }: PlayerAreaProps) {
+export default function PlayerArea({ hands, activeHandIndex, isPlayerTurn, showHandTotal = true }: PlayerAreaProps) {
   return (
     <div className="bg-green-900/30 rounded-2xl p-3 mt-3 border border-green-600/30">
       <div className="text-center mb-2">
@@ -37,7 +38,7 @@ export default function PlayerArea({ hands, activeHandIndex, isPlayerTurn }: Pla
                   <Hand
                     cards={hand.cards}
                     label={handLabel}
-                    showValue={true}
+                    showValue={showHandTotal}
                   />
                   {hand.status === HAND_STATUS.BUST && (
                     <div className="text-center text-red-400 font-bold mt-2">BUST</div>
