@@ -62,6 +62,10 @@ export interface GameConfig {
   maxSplits: number;
   surrenderAllowed: boolean;
   insuranceAllowed: boolean;
+  // Milestone 7: Side bets
+  sideBetsEnabled?: boolean;
+  perfectPairsEnabled?: boolean;
+  twentyOnePlus3Enabled?: boolean;
 }
 
 // Default game configuration
@@ -79,6 +83,10 @@ export const DEFAULT_CONFIG: GameConfig = {
   maxSplits: 3,
   surrenderAllowed: true,
   insuranceAllowed: true,
+  // Milestone 7 options
+  sideBetsEnabled: false,
+  perfectPairsEnabled: false,
+  twentyOnePlus3Enabled: false,
 };
 
 // Preset configurations for Milestone 3
