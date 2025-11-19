@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ActionRecommendation } from '../lib/strategy';
 
 interface GameControlsProps {
@@ -31,35 +32,66 @@ export default function GameControls({
   recommendations = [],
   learningModeEnabled = false,
 }: GameControlsProps) {
-  // Helper function to get button styling based on recommendations
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input field
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Don't trigger if controls are disabled
+      if (disabled) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+
+      switch (key) {
+        case 'h':
+          onHit();
+          break;
+        case 's':
+          onStand();
+          break;
+        case 'd':
+          if (canDouble) {
+            onDouble();
+          }
+          break;
+        case 'p':
+          if (canSplit) {
+            onSplit();
+          }
+          break;
+        case 'r':
+          if (canSurrender) {
+            onSurrender();
+          }
+          break;
+        case 'i':
+          if (canInsurance) {
+            onInsurance();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [disabled, onHit, onStand, onDouble, onSplit, onSurrender, onInsurance, canDouble, canSplit, canSurrender, canInsurance]);
+
+  // Helper function to get consistent button styling
   const getButtonStyle = (action: 'HIT' | 'STAND' | 'DOUBLE' | 'SPLIT' | 'SURRENDER'): string => {
-    if (!learningModeEnabled || recommendations.length === 0) {
-      // Default styles
-      const defaultStyles: Record<string, string> = {
-        'HIT': 'btn-primary',
-        'STAND': 'btn-secondary',
-        'DOUBLE': 'px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-        'SPLIT': 'px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-        'SURRENDER': 'px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-      };
-      return defaultStyles[action] || 'btn-primary';
-    }
-
-    // Find recommendation for this action
-    const rec = recommendations.find((r) => r.action === action);
-    if (!rec) {
-      return 'px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
-    }
-
-    // Color-coded styles based on quality
-    const baseStyle = 'px-6 py-3 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
-    if (rec.quality === 'optimal') {
-      return `${baseStyle} bg-green-600 hover:bg-green-700 border-2 border-green-300`;
-    } else if (rec.quality === 'acceptable') {
-      return `${baseStyle} bg-yellow-600 hover:bg-yellow-700 border-2 border-yellow-300`;
-    } else {
-      return `${baseStyle} bg-red-700 hover:bg-red-800 border-2 border-red-400`;
-    }
+    // Always use default styles - no color changes based on recommendations
+    const defaultStyles: Record<string, string> = {
+      'HIT': 'btn-primary',
+      'STAND': 'btn-secondary',
+      'DOUBLE': 'px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+      'SPLIT': 'px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+      'SURRENDER': 'px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+    };
+    return defaultStyles[action] || 'btn-primary';
   };
 
   return (
@@ -71,8 +103,9 @@ export default function GameControls({
             onClick={onInsurance}
             disabled={disabled}
             className="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Keyboard shortcut: I"
           >
-            Insurance (Half Bet)
+            Insurance (Half Bet) <span className="text-xs opacity-75">(I)</span>
           </button>
         </div>
       )}
@@ -83,23 +116,26 @@ export default function GameControls({
           onClick={onHit}
           disabled={disabled}
           className={getButtonStyle('HIT')}
+          title="Keyboard shortcut: H"
         >
-          Hit
+          Hit <span className="text-xs opacity-75">(H)</span>
         </button>
         <button
           onClick={onStand}
           disabled={disabled}
           className={getButtonStyle('STAND')}
+          title="Keyboard shortcut: S"
         >
-          Stand
+          Stand <span className="text-xs opacity-75">(S)</span>
         </button>
         {canDouble && (
           <button
             onClick={onDouble}
             disabled={disabled}
             className={getButtonStyle('DOUBLE')}
+            title="Keyboard shortcut: D"
           >
-            Double
+            Double <span className="text-xs opacity-75">(D)</span>
           </button>
         )}
         {canSplit && (
@@ -107,8 +143,9 @@ export default function GameControls({
             onClick={onSplit}
             disabled={disabled}
             className={getButtonStyle('SPLIT')}
+            title="Keyboard shortcut: P"
           >
-            Split
+            Split <span className="text-xs opacity-75">(P)</span>
           </button>
         )}
         {canSurrender && (
@@ -116,8 +153,9 @@ export default function GameControls({
             onClick={onSurrender}
             disabled={disabled}
             className={getButtonStyle('SURRENDER')}
+            title="Keyboard shortcut: R"
           >
-            Surrender
+            Surrender <span className="text-xs opacity-75">(R)</span>
           </button>
         )}
       </div>
