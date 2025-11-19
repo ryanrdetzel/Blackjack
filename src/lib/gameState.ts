@@ -26,6 +26,9 @@ import {
   resetSession,
   clearAllStatistics,
 } from './statistics';
+import { CardCountingState, createInitialCardCountingState, CountingSystem } from './cardCounting';
+import { Achievement, initializeAchievements, AchievementProgress } from './achievements';
+import { Theme, getInitialTheme } from './theme';
 
 // Game state types
 interface GameHand {
@@ -44,6 +47,8 @@ interface GameSettings {
   learningModeEnabled: boolean;
   showHints: boolean;
   showExpectedValue: boolean;
+  soundEnabled?: boolean;
+  animationsEnabled?: boolean;
 }
 
 // Learning mode mistake tracking
@@ -125,6 +130,15 @@ export interface GameState {
   learningMode: LearningModeState;
   speedTraining: SpeedTrainingState;
   statistics: StatisticsState;
+  // Milestone 7 & 8 features
+  sideBets?: {
+    perfectPairs: number;
+    twentyOnePlus3: number;
+  };
+  cardCounting?: CardCountingState;
+  achievements?: Record<string, Achievement>;
+  achievementProgress?: AchievementProgress;
+  theme?: Theme;
 }
 
 // Action types
@@ -154,7 +168,12 @@ type GameAction =
   | { type: 'TIMEOUT_DECISION' }
   | { type: 'UPDATE_DIFFICULTY'; difficulty: DifficultyLevel }
   | { type: 'RESET_SESSION_STATS' }
-  | { type: 'CLEAR_ALL_STATS' };
+  | { type: 'CLEAR_ALL_STATS' }
+  | { type: 'PLACE_SIDE_BET'; perfectPairs: number; twentyOnePlus3: number }
+  | { type: 'TOGGLE_CARD_COUNTING' }
+  | { type: 'UPDATE_COUNTING_SYSTEM'; system: CountingSystem }
+  | { type: 'TOGGLE_THEME' }
+  | { type: 'IMPORT_GAME_STATE'; state: any };
 
 /**
  * Create initial game state
@@ -181,6 +200,8 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
     learningModeEnabled: false,
     showHints: true,
     showExpectedValue: false,
+    soundEnabled: true,
+    animationsEnabled: true,
   };
   const settings: GameSettings = savedSettings ? { ...defaultSettings, ...JSON.parse(savedSettings) } : defaultSettings;
 
@@ -220,6 +241,18 @@ export function createInitialState(config: GameConfig = DEFAULT_CONFIG): GameSta
       },
     },
     statistics: createInitialStatistics(),
+    // Milestone 7 & 8 features
+    sideBets: {
+      perfectPairs: 0,
+      twentyOnePlus3: 0,
+    },
+    cardCounting: createInitialCardCountingState(finalConfig.deckCount),
+    achievements: initializeAchievements(),
+    achievementProgress: {
+      totalWins: 0,
+      totalHandsPlayed: 0,
+    },
+    theme: getInitialTheme(),
   };
 }
 
@@ -1161,6 +1194,72 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         statistics: clearAllStatistics(),
+      };
+    }
+
+    case 'PLACE_SIDE_BET': {
+      const { perfectPairs, twentyOnePlus3 } = action;
+      return {
+        ...state,
+        sideBets: {
+          perfectPairs,
+          twentyOnePlus3,
+        },
+      };
+    }
+
+    case 'TOGGLE_CARD_COUNTING': {
+      const newCardCounting = {
+        ...state.cardCounting!,
+        isActive: !state.cardCounting!.isActive,
+      };
+      return {
+        ...state,
+        cardCounting: newCardCounting,
+      };
+    }
+
+    case 'UPDATE_COUNTING_SYSTEM': {
+      const { system } = action;
+      const newCardCounting = {
+        ...state.cardCounting!,
+        system,
+        // Reset counts when changing system
+        runningCount: 0,
+        trueCount: 0,
+      };
+      return {
+        ...state,
+        cardCounting: newCardCounting,
+      };
+    }
+
+    case 'TOGGLE_THEME': {
+      const newTheme = state.theme === 'light' ? 'dark' : 'light';
+      return {
+        ...state,
+        theme: newTheme,
+      };
+    }
+
+    case 'IMPORT_GAME_STATE': {
+      const imported = action.state;
+      return {
+        ...state,
+        balance: imported.balance || state.balance,
+        config: imported.config || state.config,
+        settings: imported.settings ? { ...state.settings, ...imported.settings } : state.settings,
+        statistics: imported.statistics || state.statistics,
+        learningMode: imported.learningMode ? {
+          ...state.learningMode,
+          mistakes: imported.learningMode.mistakes || [],
+          correctDecisions: imported.learningMode.correctDecisions || 0,
+          totalDecisions: imported.learningMode.totalDecisions || 0,
+        } : state.learningMode,
+        speedTraining: imported.speedTraining ? {
+          ...state.speedTraining,
+          sessionHistory: imported.speedTraining.sessionHistory || [],
+        } : state.speedTraining,
       };
     }
 

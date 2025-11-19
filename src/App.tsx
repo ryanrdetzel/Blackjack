@@ -25,6 +25,14 @@ import { SpeedTrainingStats } from './components/speedtraining/SpeedTrainingStat
 import { DecisionTimer } from './components/speedtraining/DecisionTimer';
 import { SessionSummary } from './components/speedtraining/SessionSummary';
 import { StatisticsModal } from './components/statistics/StatisticsModal';
+import { SideBetsControls } from './components/sidebets/SideBetsControls';
+import { CardCountingDisplay } from './components/cardcounting/CardCountingDisplay';
+import { AchievementsModal } from './components/achievements/AchievementsModal';
+import { ShareModal } from './components/share/ShareModal';
+import { applyTheme, saveTheme } from './lib/theme';
+import { soundManager } from './lib/sounds';
+import { CountingSystem } from './lib/cardCounting';
+import { getStateFromUrl } from './lib/stateEncoding';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null as unknown as GameState, createInitialState);
@@ -36,27 +44,74 @@ function App() {
   const [speedTrainingOpen, setSpeedTrainingOpen] = useState(false);
   const [sessionSummaryOpen, setSessionSummaryOpen] = useState(false);
   const [statisticsOpen, setStatisticsOpen] = useState(false);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [lastCompletedSession, setLastCompletedSession] = useState<typeof state.speedTraining.currentSession | null>(null);
+
+  // Load state from URL if present
+  useEffect(() => {
+    const urlState = getStateFromUrl();
+    if (urlState && urlState.config) {
+      dispatch({ type: 'LOAD_CONFIG', config: urlState.config });
+      if (typeof urlState.balance === 'number') {
+        // Update balance after config is loaded
+        setTimeout(() => {
+          localStorage.setItem('blackjack_balance', urlState.balance.toString());
+          window.location.reload();
+        }, 100);
+      }
+    }
+  }, []);
+
+  // Apply theme on mount and when it changes
+  useEffect(() => {
+    if (state.theme) {
+      applyTheme(state.theme);
+      saveTheme(state.theme);
+    }
+  }, [state.theme]);
 
   // Auto-deal after bet is placed
   useEffect(() => {
     if (state.phase === GAME_PHASES.DEALING) {
       const timer = setTimeout(() => {
         dispatch({ type: 'DEAL_INITIAL' });
+        if (state.settings.soundEnabled) {
+          soundManager.play('card_deal');
+        }
       }, DEAL_DELAY_MS);
       return () => clearTimeout(timer);
     }
-  }, [state.phase]);
+  }, [state.phase, state.settings.soundEnabled]);
 
   // Auto-play dealer's turn
   useEffect(() => {
     if (state.phase === GAME_PHASES.DEALER_TURN) {
       const timer = setTimeout(() => {
         dispatch({ type: 'DEALER_PLAY' });
+        if (state.settings.soundEnabled) {
+          soundManager.play('card_flip');
+        }
       }, DEALER_TURN_DELAY_MS);
       return () => clearTimeout(timer);
     }
-  }, [state.phase]);
+  }, [state.phase, state.settings.soundEnabled]);
+
+  // Play sound effects based on game result
+  useEffect(() => {
+    if (state.phase === GAME_PHASES.GAME_OVER && state.result && state.settings.soundEnabled) {
+      setTimeout(() => {
+        if (state.result === 'win' || state.result === 'blackjack') {
+          soundManager.play(state.result === 'blackjack' ? 'blackjack' : 'win');
+          soundManager.play('chip_win');
+        } else if (state.result === 'lose') {
+          soundManager.play('lose');
+        } else if (state.result === 'push') {
+          soundManager.play('push');
+        }
+      }, 500);
+    }
+  }, [state.phase, state.result, state.settings.soundEnabled]);
 
   // Update strategy hint when game state changes
   useEffect(() => {
@@ -74,6 +129,9 @@ function App() {
 
   const handlePlaceBet = (amount: number) => {
     dispatch({ type: 'PLACE_BET', amount });
+    if (state.settings.soundEnabled) {
+      soundManager.play('chip_bet');
+    }
   };
 
   const handleHit = () => {
@@ -84,6 +142,9 @@ function App() {
       dispatch({ type: 'RECORD_DECISION', action: 'HIT' });
     }
     dispatch({ type: 'HIT' });
+    if (state.settings.soundEnabled) {
+      soundManager.play('card_deal');
+    }
   };
 
   const handleStand = () => {
@@ -94,6 +155,9 @@ function App() {
       dispatch({ type: 'RECORD_DECISION', action: 'STAND' });
     }
     dispatch({ type: 'STAND' });
+    if (state.settings.soundEnabled) {
+      soundManager.play('button_click');
+    }
   };
 
   const handleDouble = () => {
@@ -132,6 +196,9 @@ function App() {
 
   const handleNewGame = () => {
     dispatch({ type: 'NEW_GAME' });
+    if (state.settings.soundEnabled) {
+      soundManager.play('button_click');
+    }
   };
 
   const handleResetBalance = () => {
@@ -194,6 +261,33 @@ function App() {
 
   const handleClearAllStats = () => {
     dispatch({ type: 'CLEAR_ALL_STATS' });
+  };
+
+  // Milestone 7 & 8 handlers
+  const handlePlaceSideBet = (perfectPairs: number, twentyOnePlus3: number) => {
+    dispatch({ type: 'PLACE_SIDE_BET', perfectPairs, twentyOnePlus3 });
+    if (state.settings.soundEnabled && (perfectPairs > 0 || twentyOnePlus3 > 0)) {
+      soundManager.play('chip_bet');
+    }
+  };
+
+  const handleToggleCardCounting = () => {
+    dispatch({ type: 'TOGGLE_CARD_COUNTING' });
+  };
+
+  const handleUpdateCountingSystem = (system: CountingSystem) => {
+    dispatch({ type: 'UPDATE_COUNTING_SYSTEM', system });
+  };
+
+  const handleToggleTheme = () => {
+    dispatch({ type: 'TOGGLE_THEME' });
+    if (state.settings.soundEnabled) {
+      soundManager.play('button_click');
+    }
+  };
+
+  const handleImportState = (data: any) => {
+    dispatch({ type: 'IMPORT_GAME_STATE', state: data });
   };
 
   // Determine which actions are available
@@ -422,6 +516,71 @@ function App() {
           onClearAll={handleClearAllStats}
         />
       )}
+
+      {/* Achievements Modal */}
+      {achievementsOpen && state.achievements && (
+        <AchievementsModal
+          achievements={state.achievements}
+          onClose={() => setAchievementsOpen(false)}
+        />
+      )}
+
+      {/* Share Modal */}
+      {shareModalOpen && (
+        <ShareModal
+          state={state}
+          onClose={() => setShareModalOpen(false)}
+          onImport={handleImportState}
+        />
+      )}
+
+      {/* Side Bets Controls - Show during betting phase */}
+      {state.phase === GAME_PHASES.BETTING && state.config.sideBetsEnabled && (
+        <div className="fixed right-4 top-24 z-40">
+          <SideBetsControls
+            state={state}
+            onPlaceSideBet={handlePlaceSideBet}
+          />
+        </div>
+      )}
+
+      {/* Card Counting Display - Show when active */}
+      {state.cardCounting && (
+        <div className="fixed left-4 top-24 z-40">
+          <CardCountingDisplay
+            cardCounting={state.cardCounting}
+            onToggle={handleToggleCardCounting}
+            onSystemChange={handleUpdateCountingSystem}
+          />
+        </div>
+      )}
+
+      {/* Theme Toggle Button */}
+      <button
+        onClick={handleToggleTheme}
+        className="fixed top-4 right-4 z-50 p-3 bg-gray-800 dark:bg-gray-200 text-gray-100 dark:text-gray-900 rounded-full shadow-lg hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors"
+        title="Toggle Theme"
+      >
+        {state.theme === 'dark' ? '☀️' : '🌙'}
+      </button>
+
+      {/* Achievements and Share Buttons */}
+      <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
+        <button
+          onClick={() => setAchievementsOpen(true)}
+          className="p-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg transition-colors"
+          title="Achievements"
+        >
+          🏆
+        </button>
+        <button
+          onClick={() => setShareModalOpen(true)}
+          className="p-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg transition-colors"
+          title="Share & Export"
+        >
+          📤
+        </button>
+      </div>
     </div>
   );
 }

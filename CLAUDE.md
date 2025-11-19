@@ -103,6 +103,12 @@ Learning Mode - Speed Training: decision timer, progressive difficulty, accuracy
 ### Milestone 6 ✅
 Statistics & History: session and all-time statistics, hand history viewer, bankroll chart, data export (CSV/JSON), comprehensive performance metrics
 
+### Milestone 7 ✅
+Advanced Features: side bets (Perfect Pairs & 21+3), card counting trainer, achievement system, dark/light theme, sound effects, enhanced UI/UX
+
+### Milestone 8 ✅
+Sharing & Portability: URL state encoding/decoding, QR code generation, complete game state export/import, shareable configurations
+
 ## Current Architecture Decisions
 
 ### Why useReducer?
@@ -267,6 +273,148 @@ See `PLAN.md` for detailed roadmap. Key upcoming features:
 - Split, double, surrender actions tracked as they occur
 - Balance snapshots recorded after each hand
 - Accessible via Statistics button (📈) in header
+
+---
+
+## Milestone 7 Implementation Details
+
+### Side Bets System
+- **Location**: `src/lib/sideBets.ts` - Side bet evaluation logic
+- **Types**:
+  - **Perfect Pairs**: Pays based on matching first two cards
+    - Perfect Pair (same rank and suit): 25:1
+    - Colored Pair (same rank and color): 12:1
+    - Mixed Pair (same rank, different colors): 6:1
+  - **21+3**: Combines player's first two cards with dealer's up card
+    - Suited Trips: 100:1
+    - Straight Flush: 40:1
+    - Three of a Kind: 30:1
+    - Straight: 10:1
+    - Flush: 5:1
+- **UI**: `src/components/sidebets/SideBetsControls.tsx` - Side bets betting interface
+- **Configuration**: Enable via `config.sideBetsEnabled`, `config.perfectPairsEnabled`, `config.twentyOnePlus3Enabled`
+
+### Card Counting Trainer
+- **Location**: `src/lib/cardCounting.ts` - Card counting systems and logic
+- **Systems Supported**:
+  - Hi-Lo (most popular, beginner-friendly)
+  - Knock-Out (KO) - unbalanced system
+  - Hi-Opt I - ignores aces
+  - Hi-Opt II - advanced multi-level
+  - Omega II - expert level
+- **Features**:
+  - Running count tracking
+  - True count calculation (running count / decks remaining)
+  - Deck penetration tracking
+  - Betting recommendations based on count
+  - Insurance recommendations
+  - Strategy deviation suggestions
+- **UI**: `src/components/cardcounting/CardCountingDisplay.tsx` - Live count display and recommendations
+- **Educational**: Helps players learn card counting systems for practice and understanding
+
+### Achievement System
+- **Location**: `src/lib/achievements.ts` - Achievement definitions and tracking
+- **Categories**:
+  - **Gameplay**: First win, blackjacks, win streaks, perfect hands
+  - **Strategy**: Basic strategy accuracy, speed training completion
+  - **Progression**: Profit milestones, hands played, session goals
+  - **Special**: Insurance wins, side bet wins, lucky combinations
+- **Rarity Levels**: Common, Uncommon, Rare, Epic, Legendary
+- **Features**:
+  - Real-time achievement unlocking
+  - Progress tracking
+  - Unlock notifications
+  - Filtering by category and status
+- **UI**: `src/components/achievements/AchievementsModal.tsx` - Full achievements viewer
+- **Storage**: Achievements saved to `localStorage` with key `blackjack_achievements`
+
+### Theme System
+- **Location**: `src/lib/theme.ts` - Theme definitions and management
+- **Themes**: Light and Dark modes
+- **Features**:
+  - System preference detection
+  - Manual toggle
+  - Persistent storage
+  - Smooth transitions
+  - CSS custom properties for easy customization
+- **Customization**: Separate color schemes for table felt, cards, UI elements
+- **Storage**: Theme preference saved to `localStorage`
+
+### Sound Effects
+- **Location**: `src/lib/sounds.ts` - Sound manager using Web Audio API
+- **Sounds**:
+  - Card dealing and flipping
+  - Chip betting and winning
+  - Win, lose, push outcomes
+  - Blackjack celebration
+  - Button clicks
+  - Achievement unlocks
+- **Features**:
+  - Generated tones (no audio files required)
+  - Volume control
+  - Enable/disable toggle
+  - Persistent settings
+- **Configuration**: Sound settings saved to `localStorage`
+
+---
+
+## Milestone 8 Implementation Details
+
+### URL State Encoding
+- **Location**: `src/lib/stateEncoding.ts` - State encoding/decoding utilities
+- **Features**:
+  - Base64 URL-safe encoding
+  - Share balance and configuration via URL
+  - Automatic state loading from URL parameters
+  - Clean URL management
+- **URL Format**: `?state={base64_encoded_state}`
+- **Use Cases**:
+  - Share your current setup with friends
+  - Save specific configurations as bookmarks
+  - Transfer state between devices
+  - Resume game from shared link
+
+### QR Code Generation
+- **Features**:
+  - Generate QR codes for shareable URLs
+  - Easy mobile transfer
+  - High-resolution codes (300x300)
+- **Implementation**: Uses QR code API (can be replaced with offline library)
+- **UI**: Integrated into Share modal
+
+### State Export/Import
+- **Export Features**:
+  - Complete game state as JSON
+  - Includes balance, config, statistics, learning progress
+  - Version-tagged exports for compatibility
+  - Downloadable JSON files
+- **Import Features**:
+  - Load previous game states
+  - Validation and error handling
+  - Preserves all progress and settings
+- **UI**: `src/components/share/ShareModal.tsx` - Comprehensive share/export interface
+- **Format**: JSON with metadata (version, timestamp, etc.)
+
+### Integration Points
+- **Share Modal**: Accessible via floating button (bottom-right)
+- **Auto-load**: State automatically loaded from URL on page load
+- **Export Types**: Complete state, balance + config only
+- **Safety**: Import validation prevents corrupted data
+
+---
+
+## All Milestones Complete! 🎉
+
+The Blackjack game now includes:
+
+1. ✅ **Core Gameplay** - Full blackjack with all standard rules
+2. ✅ **Advanced Moves** - Split, double, insurance, surrender
+3. ✅ **Customization** - Preset configs and custom rule sets
+4. ✅ **Learning Mode** - Basic strategy hints and mistake tracking
+5. ✅ **Speed Training** - Timed decisions with accuracy scoring
+6. ✅ **Statistics** - Comprehensive tracking and history
+7. ✅ **Advanced Features** - Side bets, card counting, achievements, themes
+8. ✅ **Sharing** - URL encoding, QR codes, full export/import
 
 ---
 

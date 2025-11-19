@@ -4,23 +4,45 @@ A modern, interactive blackjack game built with React, Vite, and Tailwind CSS. P
 
 ## 🎯 Features
 
-### Milestone 1 - Complete! ✅
-- ✅ Full blackjack gameplay (hit, stand)
-- ✅ Realistic dealer AI (stands on 17)
-- ✅ Balance tracking with localStorage persistence
-- ✅ Customizable betting ($5-$500)
-- ✅ Beautiful card animations
-- ✅ Responsive design
-- ✅ Standard rules: 6 decks, dealer stands on soft 17, blackjack pays 3:2
+### Core Gameplay ✅
+- ✅ Full blackjack with all standard moves (hit, stand, double, split, insurance, surrender)
+- ✅ Realistic dealer AI (configurable soft 17 rule)
+- ✅ Multi-hand support for splits (up to 4 hands)
+- ✅ Beautiful card animations and UI
+- ✅ Responsive design for desktop and mobile
 
-### Milestone 2 - Complete! ✅
-- ✅ **Double Down**: Double your bet and receive one final card
-- ✅ **Split Pairs**: Split matching cards into two separate hands
-- ✅ **Insurance**: Protect against dealer blackjack when showing an Ace
-- ✅ **Surrender**: Forfeit half your bet to exit a poor hand early
-- ✅ **Multi-hand Support**: Play multiple hands simultaneously after splits
-- ✅ **Enhanced Card Visuals**: Professional card design with corner markings
-- ✅ **Advanced Rules**: Configurable options (double after split, resplit aces, max splits)
+### Customization ✅
+- ✅ **Preset Configurations**: Vegas Strip, Atlantic City, European, High Roller, and more
+- ✅ **Custom Rule Sets**: Customize deck count, dealer rules, payouts, and player options
+- ✅ **Save & Load**: Save custom configurations and load them anytime
+- ✅ **Export/Import**: Share configurations as JSON files
+
+### Learning & Training ✅
+- ✅ **Learning Mode**: Real-time basic strategy hints with color-coded optimal actions
+- ✅ **Mistake Tracking**: Track and review suboptimal decisions
+- ✅ **Strategy Chart**: Built-in basic strategy reference
+- ✅ **Speed Training**: Timed decision-making with progressive difficulty
+- ✅ **Accuracy Scoring**: Track decision accuracy and speed over time
+
+### Statistics & History ✅
+- ✅ **Session Stats**: Track hands, wins, losses, profit/loss, and streaks
+- ✅ **All-Time Stats**: Lifetime statistics across all sessions
+- ✅ **Hand History**: Review detailed history of past hands (last 500)
+- ✅ **Bankroll Chart**: Visual chart of balance over time
+- ✅ **Data Export**: Export statistics and history as CSV/JSON
+
+### Advanced Features ✅
+- ✅ **Side Bets**: Perfect Pairs (25:1, 12:1, 6:1) and 21+3 (100:1 to 5:1 payouts)
+- ✅ **Card Counting Trainer**: Learn Hi-Lo, KO, Hi-Opt, and Omega II systems
+- ✅ **Achievement System**: 30+ achievements across gameplay, strategy, and progression
+- ✅ **Dark/Light Theme**: Toggle between light and dark modes
+- ✅ **Sound Effects**: Generated sound effects for all game actions
+
+### Sharing & Portability ✅
+- ✅ **URL Sharing**: Share your game state via encoded URLs
+- ✅ **QR Codes**: Generate QR codes for easy mobile transfer
+- ✅ **Complete Export**: Export entire game state including all progress
+- ✅ **Import**: Load previously exported game states
 
 ## 🚀 Quick Start
 
@@ -97,16 +119,18 @@ src/
 PLAN.md                      # Full project roadmap and future features
 ```
 
-## 🎓 Future Features (See PLAN.md)
+## 🎓 All Milestones Complete! 🎉
 
 - ✅ **Milestone 1**: Basic blackjack game (hit, stand, betting)
 - ✅ **Milestone 2**: Double down, split, insurance, surrender
-- **Milestone 3**: Customizable game configurations (save/share)
-- **Milestone 4**: Learning mode with strategy hints
-- **Milestone 5**: Speed training mode
-- **Milestone 6**: Statistics and hand history
-- **Milestone 7**: Side bets, multi-hand play, achievements
-- **Milestone 8**: URL-based state sharing
+- ✅ **Milestone 3**: Customizable game configurations (save/share)
+- ✅ **Milestone 4**: Learning mode with strategy hints
+- ✅ **Milestone 5**: Speed training mode
+- ✅ **Milestone 6**: Statistics and hand history
+- ✅ **Milestone 7**: Side bets, card counting, achievements, themes
+- ✅ **Milestone 8**: URL sharing, QR codes, full export/import
+
+See `PLAN.md` and `CLAUDE.md` for detailed feature documentation.
 
 ## 🛠️ Tech Stack
 
@@ -119,9 +143,40 @@ PLAN.md                      # Full project roadmap and future features
 ## 📝 Development Notes
 
 - All game logic is client-side (no server required)
-- Balance persists in browser localStorage
+- Balance, statistics, and preferences persist in browser localStorage
 - Deck automatically reshuffles when cards run low
 - Game state managed with React useReducer hook
+- Theme system uses CSS custom properties
+- Sound effects generated using Web Audio API
+- All data can be exported/imported or shared via URL
+
+## 🎮 Key Features Overview
+
+### 🎴 Game Modes
+- **Play Mode**: Classic blackjack with all standard options
+- **Learning Mode**: Get real-time strategy hints and track mistakes
+- **Speed Training**: Practice quick decision-making under time pressure
+- **Card Counting**: Learn and practice various counting systems
+
+### 📊 Tracking & Analytics
+- Comprehensive statistics (session and all-time)
+- Hand-by-hand history viewer
+- Visual bankroll chart
+- Strategy accuracy tracking
+- Speed training performance metrics
+
+### 🎨 Customization
+- 7 preset rule configurations
+- Create and save custom rule sets
+- Dark and light themes
+- Configurable sound effects
+- Side bets (Perfect Pairs & 21+3)
+
+### 🏆 Achievements
+- 30+ achievements to unlock
+- 5 rarity tiers (Common to Legendary)
+- Categories: Gameplay, Strategy, Progression, Special
+- Progress tracking and filtering
 
 ## 🤝 Contributing
 
