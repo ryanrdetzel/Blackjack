@@ -35,10 +35,14 @@ export interface StrategyDecision {
 
 /**
  * Get dealer's up card value
+ * Note: During player turn, dealerHand[0] is face down (hole card)
+ * and dealerHand[1] is face up (the visible up card).
+ * We always use index 1 for the up card during gameplay.
  */
 function getDealerUpCardValue(dealerHand: Card[]): number {
-  if (dealerHand.length === 0) return 0;
-  const upCard = dealerHand[0];
+  if (dealerHand.length < 2) return 0;
+  // The second card (index 1) is the visible up card during player turn
+  const upCard = dealerHand[1];
   if (upCard.rank === 'A') return 11;
   if (['J', 'Q', 'K'].includes(upCard.rank)) return 10;
   return parseInt(upCard.rank);

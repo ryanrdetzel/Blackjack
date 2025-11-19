@@ -609,7 +609,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
       // Can only take insurance when dealer shows ace
-      if (state.dealerHand[0].rank !== 'A') {
+      // Note: dealerHand[1] is the visible up card during player turn
+      if (state.dealerHand.length < 2 || state.dealerHand[1].rank !== 'A') {
         return state;
       }
 
@@ -928,7 +929,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       // Add to mistakes if incorrect
       if (!wasCorrect) {
-        const dealerCard = state.dealerHand[0];
+        // dealerHand[1] is the visible up card during player turn
+        const dealerCard = state.dealerHand[1];
         const mistake: MistakeRecord = {
           handDescription: `${currentHand.cards.map(c => c.rank + c.suit).join(', ')}`,
           dealerUpCard: `${dealerCard.rank}${dealerCard.suit}`,
@@ -1043,7 +1045,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const optimalAction = state.learningMode.currentStrategy.primaryAction;
       const wasCorrect = playerAction === optimalAction;
       const currentHand = state.playerHands[state.activeHandIndex];
-      const dealerCard = state.dealerHand[0];
+      // dealerHand[1] is the visible up card during player turn
+      const dealerCard = state.dealerHand[1];
 
       const decisionRecord: DecisionRecord = {
         handDescription: `${currentHand.cards.map(c => c.rank + c.suit).join(', ')}`,
