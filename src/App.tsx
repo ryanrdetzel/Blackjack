@@ -386,6 +386,7 @@ function App() {
               maxBet={state.config.maxBet}
               onPlaceBet={handlePlaceBet}
               lastBetAmount={state.settings.lastBetAmount}
+              onResetBalance={handleResetBalance}
             />
           </div>
         </div>
