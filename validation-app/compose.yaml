@@ -1,0 +1,39 @@
+name: durableagents-validation-app
+services:
+  db:
+    image: postgres:16.6-bookworm
+    environment:
+      POSTGRES_DB: validation_app
+      POSTGRES_USER: validation
+      POSTGRES_PASSWORD: validation_local_only
+    ports:
+      - "127.0.0.1:${DATABASE_PORT:-55432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U validation -d validation_app"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    stop_grace_period: 15s
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgres://validation:validation_local_only@db:5432/validation_app
+      HOST: 0.0.0.0
+      PORT: "3000"
+    ports:
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "node scripts/migrate.js && node src/server.js"]
+    init: true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 6s
+      retries: 20
+    stop_grace_period: 15s
+volumes:
+  postgres-data:

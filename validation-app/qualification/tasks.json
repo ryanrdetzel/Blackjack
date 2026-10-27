@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "repository": "ryanrdetzel/durableagents-validation-app",
+  "executionNotes": "These are application task specifications, not a claim of native Gateway manifest ingestion. Launch through the actual supported task API. Domain tasks require Node 22 only, no PostgreSQL, npm dependency install, or long-lived services. PostgreSQL tasks require explicitly provisioned real PostgreSQL. Run each campaign task from a fresh baseline checkout. Parent-run acceptance checks are authoritative; preserve their original bytes outside the agent checkout.",
+  "tasks": [
+    {
+      "id": "baseline-domain",
+      "capability": "current-private-repository-checkout-and-unit-tests",
+      "requires": ["private repository checkout", "Node.js 22"],
+      "prompt": "Inspect this private repository and run npm test and npm run test:acceptance. Report actual exit codes and the transition policy. Do not modify any source or checks. PostgreSQL integration is out of scope; do not claim it ran.",
+      "acceptanceCommands": ["npm test", "npm run test:acceptance"],
+      "expectedBaseline": "pass",
+      "protectedFiles": ["src/domain.js", "test/", "qualification/acceptance/", "package.json"]
+    },
+    {
+      "id": "repair-completion-transition",
+      "capability": "current-domain-repair",
+      "requires": ["private repository checkout", "Node.js 22"],
+      "setupCommands": ["npm run fixture:apply"],
+      "expectedBeforeCommand": "npm run test:acceptance",
+      "expectedBefore": "fail: in-progress tasks cannot complete",
+      "prompt": "The qualification fixture has introduced a real domain regression. Run npm run test:acceptance first and capture the failing completion transition. Repair only src/domain.js so a pending task must start before completing, an in-progress task can complete, and terminal done/canceled tasks cannot reopen. Preserve all other behavior. Do not edit acceptance checks, unit tests, package scripts, or fixture files. Run npm test and npm run test:acceptance afterwards. This is domain verification only, not database or cross-call service verification.",
+      "acceptanceCommands": ["npm test", "npm run test:acceptance"],
+      "allowedChanges": ["src/domain.js"],
+      "protectedFiles": ["test/", "qualification/", "package.json", "package-lock.json"]
+    },
+    {
+      "id": "feature-normalize-task-labels",
+      "capability": "current-domain-feature",
+      "requires": ["private repository checkout", "Node.js 22"],
+      "expectedBeforeCommand": "npm run test:feature",
+      "expectedBefore": "fail: normalizeTaskLabels export does not yet exist",
+      "prompt": "Implement a domain-only label normalization feature by exporting normalizeTaskLabels(value) from src/domain.js. Require an array of strings. Trim and lowercase each label; allow only ASCII lowercase letters, digits, and hyphens with length 1-32. Reject invalid entries with InputError status 400. Remove normalized duplicates, sort by ASCII order, and allow at most 10 unique labels. Empty arrays are valid. Do not mutate input. The count limit applies after deduplication. Preserve all existing domain and API behavior; HTTP and database label persistence are explicitly not part of this task. First capture npm run test:feature failing; then implement and run npm test, npm run test:acceptance, and npm run test:feature. Never modify tests, acceptance checks, or package scripts.",
+      "acceptanceCommands": ["npm test", "npm run test:acceptance", "npm run test:feature"],
+      "allowedChanges": ["src/domain.js"],
+      "protectedFiles": ["test/", "qualification/", "package.json", "package-lock.json"]
+    },
+    {
+      "id": "baseline-real-postgres",
+      "capability": "local-service-backed-integration",
+      "requires": ["Node.js 22", "npm ci", "real PostgreSQL 16.6", "TEST_DATABASE_URL with CREATE SCHEMA permission"],
+      "prompt": "With an explicitly provisioned real PostgreSQL database, run migrations and seed twice, then npm test and npm run test:integration. Report actual results for HTTP validation, schema isolation, independent-connection persistence, concurrent terminal transitions, readiness, and exclusive cursor pagination. Do not replace PostgreSQL with mocks or infer service support from a single shell command.",
+      "acceptanceCommands": ["npm run migrate", "npm run migrate", "npm run seed", "npm run seed", "npm test", "npm run test:integration"],
+      "expectedBaseline": "pass with real PostgreSQL only"
+    },
+    {
+      "id": "persistent-service-across-calls",
+      "capability": "future-platform-service-lifecycle",
+      "availability": "blocked: platform service_start/service_status/service_stop are not currently available",
+      "requires": ["platform service handles", "independent tool calls sharing service lifetime", "real PostgreSQL", "stable service addresses", "retained database volume"],
+      "prompt": "Do not run until prerequisites exist. Start PostgreSQL and the API with real service_start calls, migrate and seed, and retain returned handles. In one later independent tool call POST a uniquely titled task and record its returned ID. In another call query service_status and GET that exact ID. Stop and restart only the API using service handles and retrieve the same row again. Stop owned services at the end. Record handles, timestamps, row ID, and tool-call boundaries. A compose command, background shell process, simulated tool output, or one-shot integration test does not satisfy platform cross-call lifecycle acceptance."
+    },
+    {
+      "id": "restoration",
+      "capability": "future-platform-checkpoint-restoration",
+      "availability": "blocked until platform restoration and service ownership semantics are available and verified",
+      "requires": ["checkpoint/restore support", "service handle restoration or explicit reattachment", "retained real PostgreSQL storage"],
+      "prompt": "After persistent-service prerequisites exist, create a database task and checkpoint the agent with its ID and actual service handles. Restore into a new execution; discover or reattach services using supported APIs and retrieve the same row without reseeding it. Record execution/checkpoint IDs and actual observations. A manually restarted local process does not establish platform checkpoint or service restoration."
+    },
+    {
+      "id": "cancellation",
+      "capability": "platform-task-cancellation-with-optional-future-service-cleanup",
+      "availability": "task cancellation may be qualified independently; owned-service cleanup is blocked without service lifecycle tools",
+      "requires": ["supported platform cancellation API", "observable task state"],
+      "prompt": "Launch a bounded task that repeatedly runs the existing domain unit suite until the platform cancels it. Cancel through the real platform API and verify the terminal task state and no later task output after cancellation settles. Do not claim service cleanup unless actual owned service handles exist and can be queried. Future service cleanup qualification must additionally show that task-owned API/PostgreSQL handles stop while unrelated services survive. Do not manufacture cancellation output."
+    }
+  ]
+}
